@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Califica tu experiencia</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/png" href="/assets/favicon.png">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body class="funnel-body">
+
+  <div class="funnel-container">
+    <div class="funnel-card" id="funnelCard">
+
+      <!-- Step 0: Loading State -->
+      <div id="loadingStep" style="padding: 2.5rem 0;">
+        <div style="font-size: 2.8rem; animation: bounceIn 0.8s infinite alternate;">⭐</div>
+        <p style="color: var(--text-muted); margin-top: 1rem; font-size: 0.9rem;">Cargando experiencia...</p>
+      </div>
+
+      <!-- Error / Suspended State -->
+      <div id="suspendedStep" style="display: none; padding: 2rem 0;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">⏸️</div>
+        <h2 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem;" id="suspendedBizName">Portal no disponible</h2>
+        <p style="color: #64748b; font-size: 0.9rem; line-height: 1.5;">
+          Este portal de valoración se encuentra temporalmente inactivo.
+        </p>
+      </div>
+
+      <!-- Step 1: Star Rating (Initial View) -->
+      <div id="ratingStep" style="display: none;">
+        <div class="business-branding">
+          <div class="business-logo" id="bizLogo">
+            <span id="bizInitials">--</span>
+          </div>
+          <h1 class="business-name" id="bizName">Cargando...</h1>
+          <p class="funnel-prompt" id="bizPrompt">¿Cómo calificarías tu experiencia con nosotros hoy?</p>
+        </div>
+
+        <div class="stars-wrapper" id="starsContainer">
+          <button type="button" class="star-btn" data-star="1" aria-label="1 estrella" id="star-1">
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          </button>
+          <button type="button" class="star-btn" data-star="2" aria-label="2 estrellas" id="star-2">
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          </button>
+          <button type="button" class="star-btn" data-star="3" aria-label="3 estrellas" id="star-3">
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          </button>
+          <button type="button" class="star-btn" data-star="4" aria-label="4 estrellas" id="star-4">
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          </button>
+          <button type="button" class="star-btn" data-star="5" aria-label="5 estrellas" id="star-5">
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          </button>
+        </div>
+
+        <div class="rating-label" id="ratingLabel">Toca las estrellas para calificar</div>
+      </div>
+
+      <!-- Step 2A: High Rating (4 or 5 stars) -> Direct to Google Reviews -->
+      <div id="positiveStep" class="positive-step" style="display: none;">
+        <div class="positive-icon-badge">🎉</div>
+        <h2 style="font-size: 1.35rem; font-weight: 800; margin-bottom: 0.5rem; color: #0f172a;">
+          ¡Nos alegra mucho que te haya encantado!
+        </h2>
+        <p style="color: #64748b; font-size: 0.92rem; line-height: 1.5;">
+          Las opiniones de clientes satisfechos nos ayudan a seguir creciendo. ¿Podrías compartir tu experiencia en Google? Solo te tomará 30 segundos.
+        </p>
+
+        <!-- Suggested compliments chips to copy in 1 click -->
+        <div style="margin: 1.25rem 0 1rem;">
+          <span style="font-size: 0.78rem; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Toca para copiar un elogio sugerido:</span>
+          <div class="chips-container" id="chipsContainer">
+            <button type="button" class="suggested-chip" onclick="copyPraise(this, '¡Trato excelente y muy profesionales!')">
+              ✨ Trato excelente y amable
+            </button>
+            <button type="button" class="suggested-chip" onclick="copyPraise(this, 'Calidad impecable, volveré sin duda.')">
+              ⭐ Calidad impecable
+            </button>
+            <button type="button" class="suggested-chip" onclick="copyPraise(this, 'Servicio rápido, limpio y de 10.')">
+              ⚡ Servicio rápido y limpio
+            </button>
+            <button type="button" class="suggested-chip" onclick="copyPraise(this, '100% Recomendable, superó mis expectativas.')">
+              💯 100% Recomendable
+            </button>
+          </div>
+          <div id="copyNotice" style="display: none; font-size: 0.8rem; color: #16a34a; font-weight: 700; margin-top: 0.25rem;">
+            ✓ ¡Copiado al portapapeles! Pégalo en tu reseña.
+          </div>
+        </div>
+
+        <!-- Google Redirect Button -->
+        <a id="googleRedirectBtn" href="#" target="_blank" rel="noopener noreferrer" class="google-redirect-btn">
+          <svg viewBox="0 0 24 24" width="22" height="22">
+            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.27 21.37 7.34 24 12 24z"/>
+            <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.16 0 9.94 0 12s.46 3.84 1.26 5.42l4.02-3.15z"/>
+            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.27 2.63 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+          </svg>
+          Publicar Reseña en Google
+        </a>
+
+        <!-- Auto-redirect countdown info -->
+        <div id="countdownBox" style="margin-top: 0.75rem; font-size: 0.8rem; color: #94a3b8;">
+          Redirigiendo a Google en <strong id="countdownSeconds">3</strong> segundos...
+        </div>
+
+        <div style="margin-top: 1.25rem;">
+          <button type="button" id="btnChangeRating1" style="background: none; border: none; font-size: 0.82rem; color: #94a3b8; cursor: pointer; text-decoration: underline;">
+            Volver o cambiar calificación
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2B: Low/Mid Rating (1, 2 or 3 stars) -> Private Feedback Interception -->
+      <div id="negativeStep" class="negative-step" style="display: none;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; text-align: left;">
+          <div style="width: 44px; height: 44px; border-radius: 50%; background: #fee2e2; color: #ef4444; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0;">
+            💬
+          </div>
+          <div>
+            <h3 style="margin: 0; color: #0f172a; font-size: 1.15rem; font-weight: 800;">Lamentamos lo sucedido</h3>
+            <span style="font-size: 0.8rem; color: #64748b;">Queremos escucharte y resolverlo directamente</span>
+          </div>
+        </div>
+
+        <div style="background: #f1f5f9; border-left: 3px solid #6366f1; padding: 0.65rem 0.85rem; border-radius: 6px; font-size: 0.8rem; color: #475569; text-align: left; margin-bottom: 1.25rem;">
+          🔒 <strong>100% Privado y Confidencial:</strong> Este mensaje llega directo a la gerencia y <strong>NO se publicará en internet ni en Google</strong>.
+        </div>
+
+        <form id="feedbackForm">
+          <input type="hidden" id="feedbackCategory" value="Atención y servicio">
+
+          <!-- Category Chips -->
+          <div style="text-align: left; margin-bottom: 0.5rem;">
+            <label class="form-label" style="color: #334155; font-size: 0.85rem;">¿En qué área podemos mejorar?</label>
+            <div class="category-pills-grid">
+              <div class="category-pill selected" onclick="selectCategory(this, 'Atención y trato')">👤 Atención / Trato</div>
+              <div class="category-pill" onclick="selectCategory(this, 'Tiempo de espera')">⏱️ Tiempo de espera</div>
+              <div class="category-pill" onclick="selectCategory(this, 'Calidad del servicio')">💎 Calidad servicio</div>
+              <div class="category-pill" onclick="selectCategory(this, 'Instalaciones y limpieza')">🧹 Instalaciones</div>
+              <div class="category-pill" onclick="selectCategory(this, 'Precios y facturación')">💳 Precios / Cuenta</div>
+              <div class="category-pill" onclick="selectCategory(this, 'Otro motivo')">📝 Otro motivo</div>
+            </div>
+          </div>
+
+          <div class="form-group" style="text-align: left;">
+            <label for="feedbackComment" class="form-label" style="color: #334155;">Cuéntanos qué ocurrió *</label>
+            <textarea id="feedbackComment" class="form-textarea" placeholder="¿Qué no estuvo a la altura de tus expectativas? Queremos compensarte y solucionarlo..." required rows="3" style="background: #f8fafc; color: #0f172a; border-color: #cbd5e1;"></textarea>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; text-align: left;">
+            <div class="form-group">
+              <label for="customerName" class="form-label" style="color: #334155;">Tu nombre (opcional)</label>
+              <input type="text" id="customerName" class="form-input" placeholder="Ej. Ana Pérez" style="background: #f8fafc; color: #0f172a; border-color: #cbd5e1;">
+            </div>
+
+            <div class="form-group">
+              <label for="customerContact" class="form-label" style="color: #334155;">Teléfono / WhatsApp (opcional)</label>
+              <input type="text" id="customerContact" class="form-input" placeholder="Para contactarte" style="background: #f8fafc; color: #0f172a; border-color: #cbd5e1;">
+            </div>
+          </div>
+
+          <button type="submit" id="submitFeedbackBtn" class="btn-primary" style="margin-top: 0.5rem; background: #0f172a;">
+            Enviar comentarios a la gerencia
+          </button>
+        </form>
+
+        <div style="margin-top: 1rem; text-align: center;">
+          <button type="button" id="btnChangeRating2" style="background: none; border: none; font-size: 0.82rem; color: #94a3b8; cursor: pointer; text-decoration: underline;">
+            Volver a calificar
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 3: Feedback Sent Successfully -->
+      <div id="successFeedbackStep" style="display: none; padding: 2rem 0; text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🙏</div>
+        <h3 style="font-size: 1.3rem; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem;">
+          ¡Gracias por tu sinceridad!
+        </h3>
+        <p style="color: #64748b; font-size: 0.92rem; line-height: 1.5; margin-bottom: 1.5rem;">
+          Tu mensaje ha sido entregado en privado a la dirección del negocio. Tomaremos medidas inmediatas para ofrecerte una mejor experiencia.
+        </p>
+        <button type="button" class="btn-secondary" onclick="resetFunnel()" style="padding: 0.6rem 1.25rem; font-size: 0.85rem; color: #0f172a; border-color: #cbd5e1;">
+          Cerrar
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Micro footer -->
+    <div style="text-align: center; margin-top: 1.5rem; font-size: 0.75rem; color: #94a3b8;">
+      Opinio Customer Experience • Valoración Verificada
+    </div>
+  </div>
+
+  <script src="/js/funnel.js"></script>
+</body>
+</html>

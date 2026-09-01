@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Superadministrador | Opinio Reputation</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/png" href="/assets/favicon.png">
+  <meta name="theme-color" content="#0f172a">
+  <style>
+    .admin-container {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+    .admin-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 1.75rem;
+    }
+    .admin-title-group {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .admin-logo-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #f59e0b, #ef4444);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+    .admin-nav-tabs {
+      display: flex;
+      gap: 0.5rem;
+      background: var(--bg-surface);
+      padding: 0.35rem;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+      margin-bottom: 1.75rem;
+      overflow-x: auto;
+    }
+    .admin-tab-btn {
+      padding: 0.75rem 1.25rem;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-weight: 700;
+      font-size: 0.9rem;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      white-space: nowrap;
+    }
+    .admin-tab-btn.active {
+      background: var(--brand-primary);
+      color: #ffffff;
+      box-shadow: var(--shadow-sm);
+    }
+    .admin-tab-btn:hover:not(.active) {
+      background: var(--bg-surface-elevated);
+      color: var(--text-primary);
+    }
+    .tab-badge {
+      background: #ef4444;
+      color: #ffffff;
+      font-size: 0.75rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: var(--radius-full);
+      font-weight: 800;
+    }
+    .credentials-box {
+      background: var(--bg-surface-elevated);
+      border: 1px dashed var(--border-focus);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      margin: 1.25rem 0;
+      font-family: monospace;
+      font-size: 0.9rem;
+      color: #38bdf8;
+      line-height: 1.7;
+    }
+    .filter-pills {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+    .filter-pill-btn {
+      padding: 0.45rem 0.9rem;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-color);
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .filter-pill-btn.active {
+      background: var(--text-primary);
+      color: var(--bg-main);
+      border-color: var(--text-primary);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. LOGIN VIEW (IF NOT AUTHENTICATED AS SUPERADMIN) -->
+  <div id="adminLoginSection" class="auth-page-container" style="display: none;">
+    <div class="auth-card">
+      <div style="text-align: center; margin-bottom: 1.75rem;">
+        <div class="admin-logo-icon" style="margin: 0 auto 0.75rem;">⚡</div>
+        <div class="admin-badge-role" style="margin-bottom: 0.5rem;">Acceso Restringido</div>
+        <h1 style="font-size: 1.5rem; font-weight: 800;">Super Administrador</h1>
+        <p style="color: var(--text-secondary); font-size: 0.88rem; margin-top: 0.25rem;">Control maestro de autorizaciones y negocios</p>
+      </div>
+
+      <div id="adminLoginAlert" style="display: none; padding: 0.75rem 1rem; border-radius: var(--radius-md); font-size: 0.85rem; margin-bottom: 1.25rem;"></div>
+
+      <form id="adminLoginForm" autocomplete="off">
+        <div class="form-group">
+          <label class="form-label" for="adminEmail">Email de Administrador</label>
+          <input type="email" id="adminEmail" class="form-input" placeholder="correo@ejemplo.com" required autocomplete="off">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="adminPassword">Contraseña de Administrador</label>
+          <input type="password" id="adminPassword" class="form-input" placeholder="••••••••" required autocomplete="new-password">
+        </div>
+
+        <button type="submit" id="btnAdminLoginSubmit" class="btn-primary" style="margin-top: 0.5rem; background: linear-gradient(135deg, #f59e0b, #d97706); border: none;">
+          Ingresar al Panel Maestro
+        </button>
+      </form>
+
+      <div style="margin-top: 1.5rem; text-align: center;">
+        <a href="/" style="font-size: 0.82rem; color: var(--text-muted); text-decoration: underline;">
+          ← Volver a la página principal
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. MASTER SUPERADMIN DASHBOARD -->
+  <div id="adminDashboardSection" style="display: none;">
+    <div class="admin-container">
+
+      <!-- HEADER -->
+      <header class="admin-header">
+        <div class="admin-title-group">
+          <div class="admin-logo-icon">👑</div>
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <h1 style="font-size: 1.5rem; font-weight: 800;">Panel de Control Superadmin</h1>
+              <span class="admin-badge-role">Root Master</span>
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.85rem;">Gestión centralizada de solicitudes de acceso, altas de negocios y reputación.</p>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <a href="/" target="_blank" class="btn-secondary" style="font-size: 0.85rem; padding: 0.5rem 0.9rem;">
+            Ver Web Pública
+          </a>
+          <button type="button" id="btnAdminLogout" class="action-btn-sm" style="color: var(--danger); border-color: rgba(239,68,68,0.3); padding: 0.55rem 1rem;">
+            Cerrar Sesión
+          </button>
+        </div>
+      </header>
+
+      <!-- KPI METRICS STRIP -->
+      <div class="stats-grid" style="margin-bottom: 1.75rem;">
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-label">Solicitudes Pendientes</span>
+            <div class="stat-icon warning">⏳</div>
+          </div>
+          <div class="stat-value" id="kpiPendingRequests" style="color: var(--warning);">0</div>
+          <div class="stat-subtitle">Esperando tu aprobación manual</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-label">Negocios Aprobados</span>
+            <div class="stat-icon success">🏢</div>
+          </div>
+          <div class="stat-value" id="kpiActiveBusinesses">0</div>
+          <div class="stat-subtitle">Cuentas activas en la plataforma</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-label">Total Reseñas Filtradas</span>
+            <div class="stat-icon primary">⭐</div>
+          </div>
+          <div class="stat-value" id="kpiTotalGlobalReviews">0</div>
+          <div class="stat-subtitle">Opiniones procesadas por el embudo</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-label">Satisfacción Global</span>
+            <div class="stat-icon success">👍</div>
+          </div>
+          <div class="stat-value" id="kpiGlobalSatisfaction">100%</div>
+          <div class="stat-subtitle">Enviadas a Google vs Retenidas</div>
+        </div>
+      </div>
+
+      <!-- NAVIGATION TABS -->
+      <nav class="admin-nav-tabs">
+        <button type="button" class="admin-tab-btn active" data-tab="requests" id="tabBtnRequests">
+          <span>📋 Solicitudes de Acceso</span>
+          <span class="tab-badge" id="badgePendingCount" style="display: none;">0</span>
+        </button>
+
+        <button type="button" class="admin-tab-btn" data-tab="businesses" id="tabBtnBusinesses">
+          <span>🏢 Negocios Registrados & Control</span>
+        </button>
+
+        <button type="button" class="admin-tab-btn" data-tab="analytics" id="tabBtnAnalytics">
+          <span>📊 Analíticas Globales & Auditoría</span>
+        </button>
+      </nav>
+
+      <!-- TAB 1: SOLICITUDES DE ACCESO -->
+      <section id="tab-requests" class="admin-tab-view">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 700;">Aprobación de Solicitudes de Acceso</h2>
+            <p style="font-size: 0.85rem; color: var(--text-secondary);">Ningún negocio puede iniciar sesión hasta que apruebes su solicitud manualmente.</p>
+          </div>
+
+          <!-- Filter Pills -->
+          <div class="filter-pills">
+            <button type="button" class="filter-pill-btn active" data-filter="pending" onclick="loadAdminRequests('pending')">Pendientes</button>
+            <button type="button" class="filter-pill-btn" data-filter="approved" onclick="loadAdminRequests('approved')">Aprobadas</button>
+            <button type="button" class="filter-pill-btn" data-filter="rejected" onclick="loadAdminRequests('rejected')">Rechazadas</button>
+            <button type="button" class="filter-pill-btn" data-filter="all" onclick="loadAdminRequests('all')">Todas</button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Solicitante</th>
+                <th>Negocio & Categoría</th>
+                <th>Contacto & WhatsApp</th>
+                <th>Ubicación</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="requestsTableBody">
+              <tr>
+                <td colspan="7" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                  Cargando solicitudes...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TAB 2: NEGOCIOS REGISTRADOS -->
+      <section id="tab-businesses" class="admin-tab-view" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 700;">Directorio de Negocios Aprobados</h2>
+            <p style="font-size: 0.85rem; color: var(--text-secondary);">Supervisa el estado, métricas y acceso de cada comercio registrado.</p>
+          </div>
+
+          <div style="display: flex; gap: 0.75rem;">
+            <input type="text" id="businessSearchInput" class="form-input" placeholder="Buscar negocio o email..." style="width: 260px; padding: 0.5rem 0.85rem; font-size: 0.85rem;">
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Negocio</th>
+                <th>Slug / Enlace Público</th>
+                <th>Email & Teléfono</th>
+                <th>Métricas Embudo</th>
+                <th>Estado</th>
+                <th>Acciones de Control</th>
+              </tr>
+            </thead>
+            <tbody id="businessesTableBody">
+              <tr>
+                <td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                  Cargando negocios...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TAB 3: ANALÍTICAS Y AUDITORÍA -->
+      <section id="tab-analytics" class="admin-tab-view" style="display: none;">
+        <div style="margin-bottom: 1.5rem;">
+          <h2 style="font-size: 1.25rem; font-weight: 700;">Auditoría de Notificaciones & Sistema</h2>
+          <p style="font-size: 0.85rem; color: var(--text-secondary);">Registro de emails despachados (alertas de feedback negativo, bienvenidas y aprobaciones).</p>
+        </div>
+
+        <div class="table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Fecha y Hora</th>
+                <th>Destinatario</th>
+                <th>Tipo de Notificación</th>
+                <th>Asunto</th>
+                <th>Detalle del Mensaje</th>
+              </tr>
+            </thead>
+            <tbody id="auditTableBody">
+              <tr>
+                <td colspan="5" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                  Cargando registros de auditoría...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- MODAL: APROBAR SOLICITUD -->
+  <div id="approveModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--success); display: flex; align-items: center; gap: 0.5rem;">
+          <span>✅</span> Aprobar Solicitud de Acceso
+        </h3>
+        <button type="button" class="modal-close-btn" onclick="closeApproveModal()">✕</button>
+      </div>
+
+      <div id="approveModalContent">
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+          Estás a punto de crear la cuenta oficial para <strong id="approveModalBizName" style="color: var(--text-primary);">--</strong>.
+        </p>
+
+        <form id="approveForm">
+          <input type="hidden" id="approveRequestId">
+          <div class="form-group">
+            <label class="form-label" for="initialPassword">Contraseña Inicial para el Dueño (opcional)</label>
+            <input type="text" id="initialPassword" class="form-input" placeholder="Dejar en blanco para autogenerar">
+            <small style="color: var(--text-muted); font-size: 0.75rem;">Si la dejas en blanco, el sistema generará una contraseña segura aleatoria.</small>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+            <button type="button" class="btn-secondary" onclick="closeApproveModal()">Cancelar</button>
+            <button type="submit" id="btnConfirmApprove" class="btn-primary" style="background: var(--success); border: none;">
+              Aprobar y Crear Cuenta
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Generated Credentials View -->
+      <div id="credentialsSuccessView" style="display: none;">
+        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); padding: 1rem; color: #10b981; font-weight: 700; margin-bottom: 1rem;">
+          🎉 ¡Cuenta creada y aprobada con éxito!
+        </div>
+
+        <p style="font-size: 0.85rem; color: var(--text-secondary);">
+          Comparte estas credenciales con el dueño del negocio:
+        </p>
+
+        <div class="credentials-box" id="credentialsDetails">
+          <!-- Populated by JS -->
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; margin-top: 1.25rem;">
+          <button type="button" id="btnCopyCredentials" class="btn-primary" style="flex: 1;">
+            📋 Copiar Credenciales
+          </button>
+          <button type="button" class="btn-secondary" onclick="closeApproveModal(); loadAdminRequests();">
+            Listo
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: RECHAZAR SOLICITUD -->
+  <div id="rejectModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--danger); display: flex; align-items: center; gap: 0.5rem;">
+          <span>⛔</span> Rechazar Solicitud
+        </h3>
+        <button type="button" class="modal-close-btn" onclick="closeRejectModal()">✕</button>
+      </div>
+
+      <form id="rejectForm">
+        <input type="hidden" id="rejectRequestId">
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+          Indica el motivo del rechazo para <strong id="rejectModalBizName" style="color: var(--text-primary);">--</strong>:
+        </p>
+
+        <div class="form-group">
+          <label class="form-label" for="rejectReason">Motivo de Rechazo</label>
+          <textarea id="rejectReason" class="form-textarea" rows="3" placeholder="No cumple con los requisitos del servicio o datos no verificables..." required>No cumple con los requisitos del servicio en este momento.</textarea>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+          <button type="button" class="btn-secondary" onclick="closeRejectModal()">Cancelar</button>
+          <button type="submit" class="btn-primary" style="background: var(--danger); border: none;">
+            Confirmar Rechazo
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: RESTABLECER CONTRASEÑA -->
+  <div id="resetPasswordModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="font-size: 1.25rem; font-weight: 800; color: #38bdf8; display: flex; align-items: center; gap: 0.5rem;">
+          <span>🔑</span> Restablecer Contraseña
+        </h3>
+        <button type="button" class="modal-close-btn" onclick="closeResetPasswordModal()">✕</button>
+      </div>
+
+      <form id="resetPasswordForm">
+        <input type="hidden" id="resetBusinessId">
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+          Generar nueva clave de acceso para <strong id="resetBizName" style="color: var(--text-primary);">--</strong>:
+        </p>
+
+        <div class="form-group">
+          <label class="form-label" for="newCustomPassword">Nueva Contraseña (opcional)</label>
+          <input type="text" id="newCustomPassword" class="form-input" placeholder="Dejar en blanco para generar automática">
+        </div>
+
+        <div id="resetPasswordResult" style="display: none; margin-top: 1rem;">
+          <div class="credentials-box" id="resetPasswordResultBox"></div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+          <button type="button" class="btn-secondary" onclick="closeResetPasswordModal()">Cerrar</button>
+          <button type="submit" id="btnSubmitResetPw" class="btn-primary">
+            Restablecer Clave
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/admin.js"></script>
+</body>
+</html>

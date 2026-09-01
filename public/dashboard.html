@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Negocio | Opinio Reputation</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/png" href="/assets/favicon.png">
+
+  <!-- PWA & Mobile App Support -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Opinio">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo-icon">🛡️</div>
+        <div>
+          <div class="sidebar-title">Opinio Panel</div>
+          <div class="sidebar-subtitle" id="sideBusinessName">Cargando...</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button type="button" class="nav-link active" data-tab="overview" id="navTabOverview">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          <span>Resumen & Métricas</span>
+        </button>
+
+        <button type="button" class="nav-link" data-tab="reviews" id="navTabReviews">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          <span>Buzón Privado & Feedback</span>
+          <span class="nav-badge" id="pendingReviewsBadge" style="display: none;">0</span>
+        </button>
+
+        <button type="button" class="nav-link" data-tab="nfc" id="navTabNfc">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4.5 9.5a11 11 0 0 1 15 0"></path>
+            <path d="M7.5 12.5a7 7 0 0 1 9 0"></path>
+            <path d="M10.5 15.5a3 3 0 0 1 3 0"></path>
+            <circle cx="12" cy="18.5" r="1" fill="currentColor"></circle>
+          </svg>
+          <span>Cartelería QR & NFC</span>
+        </button>
+
+        <button type="button" class="nav-link" data-tab="settings" id="navTabSettings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <span>Personalización & Marca</span>
+        </button>
+
+        <button type="button" class="nav-link" data-tab="emails" id="navTabEmails">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          <span>Alertas por Email</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile-badge">
+          <div class="user-avatar" id="sideUserAvatar">O</div>
+          <div>
+            <div class="user-info-name" id="sideUserName">Cargando...</div>
+            <div class="user-info-slug" id="sideUserSlug">/r/...</div>
+          </div>
+        </div>
+        <button type="button" id="btnLogout" class="action-btn-sm" style="width: 100%; justify-content: center; color: var(--danger); border-color: rgba(239,68,68,0.2);">
+          Cerrar Sesión
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN DASHBOARD CONTENT -->
+    <main class="main-content">
+
+      <!-- TOP BAR -->
+      <div class="top-bar">
+        <div class="page-header">
+          <h1 id="pageTitle">Resumen de Reputación</h1>
+          <p id="pageDescription">Monitorea y protege la reputación de tu negocio en Google en tiempo real.</p>
+        </div>
+
+        <div class="top-actions">
+          <a id="btnViewLiveFunnel" href="#" target="_blank" class="btn-secondary" title="Abrir embudo en nueva pestaña">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            <span>Ver mi Landing Móvil</span>
+          </a>
+          <button type="button" id="btnQuickShare" class="btn-primary" style="padding: 0.65rem 1.15rem; font-size: 0.88rem;">
+            Copiar Enlace Público
+          </button>
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           TAB 1: OVERVIEW & ANALYTICS
+           ==================================================================== -->
+      <section id="tab-overview" class="dashboard-tab-content">
+
+        <!-- KPI GRID -->
+        <div class="stats-grid">
+          <!-- Total Reviews -->
+          <div class="stat-card">
+            <div class="stat-card-header">
+              <span class="stat-label">Total Calificaciones</span>
+              <div class="stat-icon primary">⭐</div>
+            </div>
+            <div class="stat-value" id="kpiTotalRatings">0</div>
+            <div class="stat-subtitle">Escaneos completados por clientes</div>
+          </div>
+
+          <!-- Satisfaction Rate -->
+          <div class="stat-card">
+            <div class="stat-card-header">
+              <span class="stat-label">Tasa de Satisfacción</span>
+              <div class="stat-icon success">👍</div>
+            </div>
+            <div class="stat-value" id="kpiSatisfactionRate">100%</div>
+            <div class="stat-subtitle">Calificaciones de 4 y 5 estrellas</div>
+          </div>
+
+          <!-- Google Redirections -->
+          <div class="stat-card">
+            <div class="stat-card-header">
+              <span class="stat-label">Enviados a Google</span>
+              <div class="stat-icon warning">🚀</div>
+            </div>
+            <div class="stat-value" id="kpiPositiveCount">0</div>
+            <div class="stat-subtitle">Clientes dirigidos a publicar 5★</div>
+          </div>
+
+          <!-- CRISIS AVERTED (Negative Diverted) -->
+          <div class="stat-card highlight">
+            <div class="stat-card-header">
+              <span class="stat-label" style="color: #f87171;">Crisis Evitadas (1-3★)</span>
+              <div class="stat-icon danger">🛡️</div>
+            </div>
+            <div class="stat-value" id="kpiDivertedCount" style="color: #ef4444;">0</div>
+            <div class="stat-subtitle" style="color: #fca5a5;">Feedback negativo interceptado</div>
+          </div>
+        </div>
+
+        <!-- CHARTS & PENDING ATTENTION -->
+        <div class="analytics-section">
+          <!-- Star Distribution Visualizer -->
+          <div class="card-box">
+            <div class="card-box-title">
+              <span>Distribución de Estrellas</span>
+              <span style="font-size: 0.85rem; color: var(--text-muted);" id="kpiAvgRating">Promedio: 5.0 ★</span>
+            </div>
+
+            <div id="distributionContainer">
+              <div class="distribution-row">
+                <span class="star-num">5 ★</span>
+                <div class="dist-bar-track"><div class="dist-bar-fill" id="bar5" style="width: 0%;"></div></div>
+                <span class="dist-count" id="count5">0</span>
+              </div>
+              <div class="distribution-row">
+                <span class="star-num">4 ★</span>
+                <div class="dist-bar-track"><div class="dist-bar-fill" id="bar4" style="width: 0%;"></div></div>
+                <span class="dist-count" id="count4">0</span>
+              </div>
+              <div class="distribution-row">
+                <span class="star-num" style="color: #f87171;">3 ★</span>
+                <div class="dist-bar-track"><div class="dist-bar-fill negative" id="bar3" style="width: 0%;"></div></div>
+                <span class="dist-count" id="count3">0</span>
+              </div>
+              <div class="distribution-row">
+                <span class="star-num" style="color: #f87171;">2 ★</span>
+                <div class="dist-bar-track"><div class="dist-bar-fill negative" id="bar2" style="width: 0%;"></div></div>
+                <span class="dist-count" id="count2">0</span>
+              </div>
+              <div class="distribution-row">
+                <span class="star-num" style="color: #f87171;">1 ★</span>
+                <div class="dist-bar-track"><div class="dist-bar-fill negative" id="bar1" style="width: 0%;"></div></div>
+                <span class="dist-count" id="count1">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pending Attention / Urgent Feedback -->
+          <div class="card-box">
+            <div class="card-box-title">
+              <span>Feedback Privado que Requiere Atención</span>
+              <button type="button" class="action-btn-sm" onclick="switchTab('reviews')">Ver todos →</button>
+            </div>
+
+            <div id="urgentFeedbackList">
+              <p style="color: var(--text-muted); font-size: 0.88rem;">Cargando opiniones...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           TAB 2: REVIEWS FEED & DETAILED MANAGEMENT
+           ==================================================================== -->
+      <section id="tab-reviews" class="dashboard-tab-content" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+          <div class="filter-tabs" style="margin-bottom: 0;">
+            <button type="button" class="filter-tab active" data-filter="all">Todas</button>
+            <button type="button" class="filter-tab" data-filter="negative">🛡️ Feedback Privado (1-3★)</button>
+            <button type="button" class="filter-tab" data-filter="positive">⭐ Positivas (4-5★)</button>
+            <button type="button" class="filter-tab" data-status="new">🔴 Nuevas</button>
+            <button type="button" class="filter-tab" data-status="contacted">🟡 En Contacto</button>
+            <button type="button" class="filter-tab" data-status="resolved">🟢 Resueltas</button>
+          </div>
+
+          <div style="display: flex; gap: 0.75rem;">
+            <a href="/api/business/reviews/export.csv" class="btn-secondary" style="font-size: 0.85rem; padding: 0.5rem 0.9rem;" title="Descargar informe completo en Excel/CSV">
+              📥 Exportar CSV
+            </a>
+          </div>
+        </div>
+
+        <div id="reviewsFeedContainer">
+          <!-- Dynamic Review Cards Loaded via JS -->
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           TAB 3: QR CODE & NFC FLYER / TABLE TENT DESIGNER
+           ==================================================================== -->
+      <section id="tab-nfc" class="dashboard-tab-content" style="display: none;">
+
+        <div class="card-box" style="margin-bottom: 2rem;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; align-items: start;" class="nfc-grid-wrap">
+
+            <!-- Printable Table Tent & Stand Flyer Preview -->
+            <div>
+              <div class="printable-stand-preview" id="printableStandCard">
+                <div style="width: 52px; height: 52px; margin: 0 auto 0.75rem; border-radius: 50%; background: var(--brand-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800;" id="printBizAvatar">
+                  ⭐
+                </div>
+                <h3 style="font-size: 1.35rem; font-weight: 800; color: #0f172a; margin-bottom: 0.35rem;" id="printBizName">
+                  Tu Negocio
+                </h3>
+                <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.25rem;" id="printSubtitle">
+                  ¿Qué te pareció tu experiencia hoy?
+                </p>
+
+                <!-- Embedded QR Code -->
+                <div style="background: #ffffff; padding: 1rem; border-radius: 14px; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.08); margin-bottom: 1rem;" id="qrCanvasContainer">
+                  <div style="font-size: 0.8rem; color: #64748b;">Generando código QR...</div>
+                </div>
+
+                <div style="font-size: 0.9rem; font-weight: 700; color: #0f172a; margin-bottom: 0.25rem;">
+                  📲 Escanea con la cámara de tu móvil
+                </div>
+                <div style="font-size: 0.75rem; color: #64748b; font-family: monospace;" id="printShortUrl">
+                  /r/...
+                </div>
+              </div>
+
+              <!-- Print Action Button -->
+              <div style="margin-top: 1.25rem; text-align: center;">
+                <button type="button" class="btn-primary" onclick="window.print()" style="padding: 0.75rem 1.5rem; font-size: 0.9rem; width: auto;">
+                  🖨️ Imprimir Cartel de Mesa / Stand (PDF)
+                </button>
+              </div>
+            </div>
+
+            <!-- NFC Links & Guide -->
+            <div>
+              <div style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.85rem; background: rgba(16, 185, 129, 0.12); color: #34d399; border-radius: 9999px; font-size: 0.8rem; font-weight: 700; margin-bottom: 0.75rem;">
+                ✓ Enlace Directo para Tarjetas NFC y Pegatinas
+              </div>
+
+              <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 0.5rem;">
+                Graba tu chip NFC en 30 segundos
+              </h2>
+
+              <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.55; margin-bottom: 1.25rem;">
+                Copia este enlace oficial para grabarlo en tarjetas inteligentes o placas de metacrilato. Al acercar el móvil, el cliente abre el embudo al instante.
+              </p>
+
+              <div class="form-group">
+                <label class="form-label" style="font-weight: 700;">Enlace público de tu embudo:</label>
+                <div style="display: flex; gap: 0.5rem;">
+                  <input type="text" id="nfcPublicUrlInput" class="form-input" readonly style="font-family: monospace; font-size: 0.88rem; background: var(--bg-surface-elevated); color: #38bdf8;">
+                  <button type="button" id="btnCopyNfcUrl" class="btn-primary" style="width: auto; padding: 0.65rem 1rem; white-space: nowrap;">
+                    📋 Copiar
+                  </button>
+                </div>
+                <div id="copyNfcToast" style="display: none; color: #34d399; font-size: 0.8rem; font-weight: 600; margin-top: 0.4rem;">
+                  ✓ ¡Copiado al portapapeles!
+                </div>
+              </div>
+
+              <!-- Quick Steps -->
+              <div style="background: var(--bg-surface-elevated); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem; margin-top: 1rem; font-size: 0.82rem; line-height: 1.5; color: var(--text-secondary);">
+                <strong style="color: var(--text-primary);">Pasos para grabar con NFC Tools (App gratuita):</strong>
+                <ol style="padding-left: 1.2rem; margin-top: 0.4rem;">
+                  <li>Abre la app <strong>NFC Tools</strong> en tu iPhone o Android.</li>
+                  <li>Ve a <strong>Escribir</strong> > <strong>Añadir un registro</strong> > <strong>URL</strong>.</li>
+                  <li>Pega tu enlace de arriba y toca <strong>Escribir</strong> acercando la tarjeta.</li>
+                </ol>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ====================================================================
+           TAB 4: BRANDING & SETTINGS (WITH LIVE MOBILE SIMULATOR)
+           ==================================================================== -->
+      <section id="tab-settings" class="dashboard-tab-content" style="display: none;">
+
+        <div class="settings-split-layout">
+
+          <!-- Left Side: Settings Form -->
+          <div class="card-box">
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem;">
+              Personalización de Marca & Google Business
+            </h2>
+
+            <form id="settingsForm">
+              <!-- Google Review Link -->
+              <div class="form-group">
+                <label class="form-label" for="settingGoogleUrl">
+                  Enlace Directo de Reseñas de Google (Ficha Google Maps) *
+                </label>
+                <div style="display: flex; gap: 0.5rem;">
+                  <input type="url" id="settingGoogleUrl" class="form-input" placeholder="https://search.google.com/local/writereview?placeid=..." required>
+                  <button type="button" class="btn-secondary" onclick="testGoogleLink()" style="white-space: nowrap; font-size: 0.82rem;">
+                    Probar Enlace ↗
+                  </button>
+                </div>
+                <small style="color: var(--text-muted); font-size: 0.78rem; display: block; margin-top: 0.3rem;">
+                  Aquí se redirigirá automáticamente a los clientes que elijan 4 o 5 estrellas.
+                </small>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="settingName">Nombre del Negocio</label>
+                <input type="text" id="settingName" class="form-input" required>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                  <label class="form-label" for="settingPrimaryColor">Color Principal</label>
+                  <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <input type="color" id="settingPrimaryColorPicker" style="width: 44px; height: 38px; border: none; border-radius: var(--radius-sm); cursor: pointer; background: transparent;">
+                    <input type="text" id="settingPrimaryColor" class="form-input" value="#4F46E5">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="settingAccentColor">Color Secundario</label>
+                  <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <input type="color" id="settingAccentColorPicker" style="width: 44px; height: 38px; border: none; border-radius: var(--radius-sm); cursor: pointer; background: transparent;">
+                    <input type="text" id="settingAccentColor" class="form-input" value="#EC4899">
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="settingWelcomeTitle">Pregunta / Título en el Embudo</label>
+                <input type="text" id="settingWelcomeTitle" class="form-input" placeholder="¿Cómo calificarías tu experiencia hoy?">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="settingNotificationEmail">Correo para Alertas de Feedback Privado</label>
+                <input type="email" id="settingNotificationEmail" class="form-input" placeholder="gerencia@tunegocio.com">
+              </div>
+
+              <div class="form-group" style="display: flex; align-items: center; gap: 0.75rem; margin-top: 1rem;">
+                <input type="checkbox" id="settingNotifyOnNegative" style="width: 18px; height: 18px; cursor: pointer;" checked>
+                <label for="settingNotifyOnNegative" style="font-size: 0.88rem; cursor: pointer;">
+                  Activar alertas inmediatas por email cuando un cliente califique con 1, 2 o 3 estrellas
+                </label>
+              </div>
+
+              <div style="margin-top: 1.75rem; display: flex; gap: 1rem; align-items: center;">
+                <button type="submit" id="btnSaveSettings" class="btn-primary" style="width: auto;">
+                  Guardar Configuración
+                </button>
+                <span id="settingsSaveStatus" style="font-size: 0.85rem; color: var(--success); display: none;">
+                  ✓ Guardado exitosamente
+                </span>
+              </div>
+            </form>
+          </div>
+
+          <!-- Right Side: Live Mobile Simulator -->
+          <div class="phone-mockup-wrapper">
+            <div class="phone-mockup-label">
+              <span>📱 Simulador Móvil en Vivo</span>
+            </div>
+            <div class="phone-frame">
+              <div class="phone-notch"></div>
+              <iframe id="mobilePreviewFrame" class="phone-iframe" src="about:blank"></iframe>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ====================================================================
+           TAB 5: EMAIL ALERTS LOG
+           ==================================================================== -->
+      <section id="tab-emails" class="dashboard-tab-content" style="display: none;">
+        <div class="card-box">
+          <div class="card-box-title">
+            <span>Historial de Alertas de Reseñas Negativas Despachadas</span>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">Notificaciones automáticas</span>
+          </div>
+
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">
+            Cada vez que un cliente califica con 1, 2 o 3 estrellas, el sistema despacha una alerta para resolver el caso de inmediato.
+          </p>
+
+          <div id="emailLogsContainer">
+            <!-- Dynamic logs -->
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>

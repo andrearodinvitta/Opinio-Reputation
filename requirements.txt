@@ -1,0 +1,2 @@
+# Python dependencies for Vercel deployment
+qrcode>=7.4.2
