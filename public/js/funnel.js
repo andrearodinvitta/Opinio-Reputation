@@ -24,13 +24,15 @@ document.addEventListener('DOMContentLoaded', () => {
 function getSlugFromUrl() {
   const path = window.location.pathname;
   if (path.startsWith('/r/')) {
-    return path.substring(3).split('/')[0];
+    const raw = path.substring(3).split('/')[0].split('?')[0].split('#')[0];
+    return decodeURIComponent(raw).trim();
   }
   if (path.startsWith('/feedback/')) {
-    return path.substring(10).split('/')[0];
+    const raw = path.substring(10).split('/')[0].split('?')[0].split('#')[0];
+    return decodeURIComponent(raw).trim();
   }
   const params = new URLSearchParams(window.location.search);
-  return params.get('slug') || 'soraya-nails';
+  return decodeURIComponent(params.get('slug') || '').trim();
 }
 
 async function initFunnel() {

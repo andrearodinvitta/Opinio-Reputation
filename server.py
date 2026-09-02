@@ -103,7 +103,78 @@ def verify_password(password: str, stored_hash: str) -> bool:
     except Exception:
         return False
 
+def sync_bundled_db():
+    if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+        bundled_db = os.path.join(BASE_DIR, "reputation.db")
+        if os.path.exists(bundled_db):
+            try:
+                import shutil
+                if not os.path.exists(DB_PATH) or os.path.getmtime(bundled_db) > os.path.getmtime(DB_PATH):
+                    shutil.copy2(bundled_db, DB_PATH)
+                    print(f"[Vercel] Synced database to {DB_PATH}")
+                else:
+                    # Merge any newly added businesses from bundled_db into /tmp/reputation.db
+                    conn_tmp = sqlite3.connect(DB_PATH)
+                    cur_tmp = conn_tmp.cursor()
+                    conn_b = sqlite3.connect(bundled_db)
+                    conn_b.row_factory = sqlite3.Row
+                    cur_b = conn_b.cursor()
+                    for biz in cur_b.execute("SELECT * FROM businesses").fetchall():
+                        cur_tmp.execute("SELECT id FROM businesses WHERE slug = ? OR email = ?", (biz['slug'], biz['email']))
+                        if not cur_tmp.fetchone():
+                            cols = biz.keys()
+                            placeholders = ','.join(['?'] * len(cols))
+                            col_names = ','.join(cols)
+                            cur_tmp.execute(f"INSERT OR REPLACE INTO businesses ({col_names}) VALUES ({placeholders})", tuple(biz))
+                            conn_tmp.commit()
+                            print(f"[Vercel] Synced business {biz['slug']} into /tmp/reputation.db")
+                    conn_tmp.close()
+                    conn_b.close()
+            except Exception as e:
+                print(f"[Vercel DB Sync Note] {e}")
+
+def find_business_by_slug(cursor, slug_input):
+    if not slug_input:
+        return None
+    raw = unquote(unquote(str(slug_input))).strip()
+    norm = slugify(raw)
+
+    # 1. Exact slug match
+    cursor.execute("SELECT * FROM businesses WHERE slug = ?", (raw,))
+    row = cursor.fetchone()
+    if row:
+        return row
+
+    # 2. Case-insensitive / slugified match
+    cursor.execute("SELECT * FROM businesses WHERE LOWER(slug) = LOWER(?) OR slug = ? OR LOWER(slug) = LOWER(?)", (raw, norm, norm))
+    row = cursor.fetchone()
+    if row:
+        return row
+
+    # 3. Partial prefix or contains match on slug
+    if norm:
+        cursor.execute("SELECT * FROM businesses WHERE slug LIKE ? OR slug LIKE ? ORDER BY CASE WHEN slug LIKE ? THEN 1 ELSE 2 END LIMIT 1", (f"{norm}%", f"%{norm}%", f"{norm}%"))
+        row = cursor.fetchone()
+        if row:
+            return row
+
+    # 4. Name match (case-insensitive)
+    cursor.execute("SELECT * FROM businesses WHERE LOWER(name) = LOWER(?) OR name LIKE ? LIMIT 1", (raw, f"%{raw}%"))
+    row = cursor.fetchone()
+    if row:
+        return row
+
+    # 5. ID match if numeric
+    if raw.isdigit():
+        cursor.execute("SELECT * FROM businesses WHERE id = ?", (int(raw),))
+        row = cursor.fetchone()
+        if row:
+            return row
+
+    return None
+
 def get_db():
+    sync_bundled_db()
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON;")
@@ -530,11 +601,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             slug = path[len('/api/funnel/'):].strip().strip('/')
             conn = get_db()
             cursor = conn.cursor()
-            cursor.execute("""
-            SELECT id, slug, name, google_review_url, logo_url, primary_color, accent_color,
-                   welcome_title, welcome_subtitle, status FROM businesses WHERE slug = ?
-            """, (slug,))
-            row = cursor.fetchone()
+            row = find_business_by_slug(cursor, slug)
             conn.close()
 
             if not row:
@@ -1483,8 +1550,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
             conn = get_db()
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM businesses WHERE slug = ?", (slug,))
-            business = cursor.fetchone()
+            business = find_business_by_slug(cursor, slug)
             if not business:
                 conn.close()
                 self.send_error_json("Negocio no encontrado", 404)
@@ -1550,8 +1616,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
             conn = get_db()
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM businesses WHERE slug = ?", (slug,))
-            business = cursor.fetchone()
+            business = find_business_by_slug(cursor, slug)
             if not business:
                 conn.close()
                 self.send_error_json("Negocio no encontrado", 404)
