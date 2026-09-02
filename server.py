@@ -1179,6 +1179,13 @@ class RequestHandler(BaseHTTPRequestHandler):
             return
 
         # -------------------------------------------------------------------
+        # 1B. BUSINESS: Profile & Settings Update (POST Support)
+        # -------------------------------------------------------------------
+        if path == '/api/business/profile':
+            self.handle_profile_update(body)
+            return
+
+        # -------------------------------------------------------------------
         # 2. AUTH: Business Login (Only Approved & Active Accounts)
         # -------------------------------------------------------------------
         if path == '/api/auth/login':
@@ -1691,6 +1698,50 @@ class RequestHandler(BaseHTTPRequestHandler):
 
         self.send_error(404, "Endpoint not found")
 
+    def handle_profile_update(self, body):
+        business = self.get_auth_business()
+        if not business:
+            self.send_error_json("No autenticado", 401)
+            return
+        if business.get('_is_suspended'):
+            self.send_error_json("Cuenta suspendida", 403)
+            return
+
+        name = (body.get('name') or business['name']).strip()
+        google_review_url = (body.get('google_review_url') or '').strip()
+        logo_url = (body.get('logo_url') or '').strip()
+        primary_color = (body.get('primary_color') or '#4F46E5').strip()
+        accent_color = (body.get('accent_color') or '#EC4899').strip()
+        welcome_title = (body.get('welcome_title') or '').strip()
+        welcome_subtitle = (body.get('welcome_subtitle') or '').strip()
+        notification_email = (body.get('notification_email') or business['email']).strip()
+        phone = (body.get('phone') or business.get('phone', '')).strip()
+        notify_on_negative = 1 if body.get('notify_on_negative', True) else 0
+
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("""
+        UPDATE businesses SET
+            name = ?, google_review_url = ?, logo_url = ?,
+            primary_color = ?, accent_color = ?,
+            welcome_title = ?, welcome_subtitle = ?,
+            notification_email = ?, phone = ?, notify_on_negative = ?
+        WHERE id = ?
+        """, (name, google_review_url, logo_url, primary_color, accent_color,
+              welcome_title, welcome_subtitle, notification_email, phone, notify_on_negative,
+              business['id']))
+        conn.commit()
+
+        cursor.execute("SELECT id, slug, name, email, google_review_url, logo_url, primary_color, accent_color, welcome_title, welcome_subtitle, notification_email, phone, notify_on_negative, status FROM businesses WHERE id = ?", (business['id'],))
+        updated_biz = dict(cursor.fetchone())
+        conn.close()
+
+        self.send_json({
+            "success": True,
+            "business": updated_biz,
+            "message": "Configuración de marca actualizada exitosamente."
+        })
+
     # -----------------------------------------------------------------------
     # PUT Requests
     # -----------------------------------------------------------------------
@@ -1703,41 +1754,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             return
 
         if path == '/api/business/profile':
-            business = self.get_auth_business()
-            if not business:
-                self.send_error_json("No autenticado", 401)
-                return
-            if business.get('_is_suspended'):
-                self.send_error_json("Cuenta suspendida", 403)
-                return
-
-            name = (body.get('name') or business['name']).strip()
-            google_review_url = (body.get('google_review_url') or '').strip()
-            logo_url = (body.get('logo_url') or '').strip()
-            primary_color = (body.get('primary_color') or '#4F46E5').strip()
-            accent_color = (body.get('accent_color') or '#EC4899').strip()
-            welcome_title = (body.get('welcome_title') or '').strip()
-            welcome_subtitle = (body.get('welcome_subtitle') or '').strip()
-            notification_email = (body.get('notification_email') or business['email']).strip()
-            phone = (body.get('phone') or business.get('phone', '')).strip()
-            notify_on_negative = 1 if body.get('notify_on_negative', True) else 0
-
-            conn = get_db()
-            cursor = conn.cursor()
-            cursor.execute("""
-            UPDATE businesses SET
-                name = ?, google_review_url = ?, logo_url = ?,
-                primary_color = ?, accent_color = ?,
-                welcome_title = ?, welcome_subtitle = ?,
-                notification_email = ?, phone = ?, notify_on_negative = ?
-            WHERE id = ?
-            """, (name, google_review_url, logo_url, primary_color, accent_color,
-                  welcome_title, welcome_subtitle, notification_email, phone, notify_on_negative,
-                  business['id']))
-            conn.commit()
-            conn.close()
-
-            self.send_json({"success": True, "message": "Configuración de marca actualizada exitosamente."})
+            self.handle_profile_update(body)
             return
 
         self.send_error(404, "Endpoint not found")

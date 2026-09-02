@@ -627,7 +627,7 @@ function initSettingsForm() {
     form.addEventListener('submit', handleSettingsSubmit);
   }
 
-  // Live color pickers
+  // Live Primary Color sync
   const primaryColorPicker = document.getElementById('settingPrimaryColorPicker');
   const primaryColorInput = document.getElementById('settingPrimaryColor');
   if (primaryColorPicker && primaryColorInput) {
@@ -641,10 +641,37 @@ function initSettingsForm() {
     });
   }
 
+  // Live Accent / Secondary Color sync
+  const accentColorPicker = document.getElementById('settingAccentColorPicker');
+  const accentColorInput = document.getElementById('settingAccentColor');
+  if (accentColorPicker && accentColorInput) {
+    accentColorPicker.addEventListener('input', (e) => {
+      accentColorInput.value = e.target.value;
+      updateMobileSimulator();
+    });
+    accentColorInput.addEventListener('input', (e) => {
+      accentColorPicker.value = e.target.value;
+      updateMobileSimulator();
+    });
+  }
+
+  // Live Business Name preview
   const nameInput = document.getElementById('settingName');
   if (nameInput) {
     nameInput.addEventListener('input', () => {
-      document.getElementById('printBizName').textContent = nameInput.value;
+      const printBiz = document.getElementById('printBizName');
+      if (printBiz) printBiz.textContent = nameInput.value;
+      const sideName = document.getElementById('sideBusinessName');
+      if (sideName) sideName.textContent = nameInput.value;
+    });
+  }
+
+  // Live Welcome Title preview
+  const welcomeInput = document.getElementById('settingWelcomeTitle');
+  if (welcomeInput) {
+    welcomeInput.addEventListener('input', () => {
+      const promptEl = document.getElementById('bizPrompt');
+      if (promptEl) promptEl.textContent = welcomeInput.value;
     });
   }
 }
@@ -661,8 +688,17 @@ async function handleSettingsSubmit(e) {
   const btn = document.getElementById('btnSaveSettings');
   const statusEl = document.getElementById('settingsSaveStatus');
 
+  if (!name) {
+    alert('Por favor introduce el nombre del negocio.');
+    return;
+  }
+  if (!google_review_url) {
+    alert('Por favor introduce el enlace directo de Google Reviews (Ficha Google Maps).');
+    return;
+  }
+
   btn.disabled = true;
-  btn.textContent = 'Guardando...';
+  btn.innerHTML = '💾 Guardando cambios...';
 
   try {
     const res = await authFetch('/api/business/profile', {
@@ -681,17 +717,29 @@ async function handleSettingsSubmit(e) {
     const data = await res.json();
 
     if (res.ok && data.success) {
-      statusEl.style.display = 'inline';
-      setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
-      loadBusinessProfile();
+      if (statusEl) {
+        statusEl.textContent = '✓ ¡Configuración guardada exitosamente!';
+        statusEl.style.display = 'inline-block';
+        statusEl.style.color = '#10b981';
+        statusEl.style.fontWeight = '700';
+        setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
+      }
+      if (data.business) {
+        currentBusiness = data.business;
+        renderSidebarProfile(currentBusiness);
+      } else {
+        await loadBusinessProfile();
+      }
+      updateMobileSimulator();
     } else {
-      alert(data.error || 'Error al guardar.');
+      alert(data.error || 'Error al guardar los cambios.');
     }
   } catch (err) {
+    console.error('Error saving settings:', err);
     alert('Error al conectar con el servidor.');
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Guardar Configuración';
+    btn.innerHTML = 'Guardar Configuración';
   }
 }
 
@@ -699,7 +747,7 @@ function updateMobileSimulator() {
   if (!currentBusiness) return;
   const iframe = document.getElementById('mobilePreviewFrame');
   if (iframe) {
-    iframe.src = `/r/${currentBusiness.slug}?preview=1`;
+    iframe.src = `/r/${currentBusiness.slug}?preview=1&t=${Date.now()}`;
   }
 }
 
