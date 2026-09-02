@@ -410,9 +410,27 @@ function initQrStudio() {
   if (!currentBusiness) return;
   const qrContainer = document.getElementById('qrCanvasContainer');
   if (qrContainer) {
-    // Generate embedded SVG QR
+    const fullFunnelUrl = `${window.location.origin}/r/${currentBusiness.slug}`;
+    qrContainer.innerHTML = '';
+    
+    if (typeof QRCode !== 'undefined') {
+      try {
+        new QRCode(qrContainer, {
+          text: fullFunnelUrl,
+          width: 170,
+          height: 170,
+          colorDark: "#0f172a",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.H
+        });
+        return;
+      } catch (e) {
+        console.warn('QRCode JS render error, falling back to image:', e);
+      }
+    }
+
     qrContainer.innerHTML = `
-      <img src="/api/funnel/${currentBusiness.slug}/qr.svg" alt="Código QR" style="width: 170px; height: 170px; display: block;" onerror="this.onerror=null; this.src='https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=${encodeURIComponent(window.location.origin + '/r/' + currentBusiness.slug)}';">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=170x170&margin=0&data=${encodeURIComponent(fullFunnelUrl)}" alt="Código QR" style="width: 170px; height: 170px; display: block;" onerror="this.onerror=null; this.src='/api/funnel/${currentBusiness.slug}/qr.svg';">
     `;
   }
 }

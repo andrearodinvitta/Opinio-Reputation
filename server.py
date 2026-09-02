@@ -559,6 +559,9 @@ class RequestHandler(BaseHTTPRequestHandler):
                 return
 
             biz_dict = dict(row)
+            if not biz_dict.get('google_review_url'):
+                biz_dict['google_review_url'] = f"https://www.google.com/search?q={quote(biz_dict['name'] + ' opiniones google')}"
+
             if biz_dict.get('status') == 'suspended':
                 self.send_json({
                     "success": False,
@@ -1528,7 +1531,10 @@ class RequestHandler(BaseHTTPRequestHandler):
             }
 
             if sentiment == 'positive':
-                response_data["google_review_url"] = business['google_review_url'] or "https://search.google.com"
+                g_url = business['google_review_url']
+                if not g_url:
+                    g_url = f"https://www.google.com/search?q={quote(business['name'] + ' opiniones google')}"
+                response_data["google_review_url"] = g_url
                 response_data["message"] = "¡Muchas gracias! Ayúdanos compartiendo tu experiencia en Google."
                 response_data["suggested_chips"] = [
                     "Excelente atención y amabilidad",

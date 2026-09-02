@@ -178,12 +178,25 @@ function showPositiveFlow(googleUrl) {
   document.getElementById('negativeStep').style.display = 'none';
   document.getElementById('positiveStep').style.display = 'block';
 
-  const redirectBtn = document.getElementById('googleRedirectBtn');
-  const targetUrl = googleUrl || (businessData && businessData.google_review_url) || 'https://search.google.com';
-  redirectBtn.href = targetUrl;
+  const defaultSearchQuery = encodeURIComponent((businessData && businessData.name ? businessData.name : 'negocio') + ' opiniones google');
+  const targetUrl = (googleUrl && googleUrl.startsWith('http')) 
+    ? googleUrl 
+    : (businessData && businessData.google_review_url && businessData.google_review_url.startsWith('http'))
+      ? businessData.google_review_url 
+      : `https://www.google.com/search?q=${defaultSearchQuery}`;
 
-  // Auto redirect countdown (3 seconds)
-  let timeLeft = 3;
+  const redirectBtn = document.getElementById('googleRedirectBtn');
+  if (redirectBtn) {
+    redirectBtn.href = targetUrl;
+    redirectBtn.onclick = (e) => {
+      e.preventDefault();
+      if (countdownTimer) clearInterval(countdownTimer);
+      window.location.href = targetUrl;
+    };
+  }
+
+  // Auto redirect countdown (2 seconds) with direct location navigation (no popup blocker)
+  let timeLeft = 2;
   const countdownEl = document.getElementById('countdownSeconds');
   const countdownBox = document.getElementById('countdownBox');
 
@@ -194,8 +207,8 @@ function showPositiveFlow(googleUrl) {
     if (countdownEl) countdownEl.textContent = timeLeft;
     if (timeLeft <= 0) {
       clearInterval(countdownTimer);
-      countdownBox.innerHTML = `<span>✓ Redirigiendo a Google...</span>`;
-      window.open(targetUrl, '_blank');
+      if (countdownBox) countdownBox.innerHTML = `<span>✓ Redirigiendo a Google...</span>`;
+      window.location.href = targetUrl;
     }
   }, 1000);
 }
