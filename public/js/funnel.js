@@ -169,7 +169,21 @@ async function selectRating(rating) {
       console.error('Error logging rating:', e);
     }
 
-    // Direct and instant redirection to Google Reviews (350ms for visual feedback)
+    // Detect if running inside the Dashboard's Simulator Iframe
+    const isInsideIframe = (window.self !== window.top);
+
+    if (isInsideIframe) {
+      if (ratingLabel) {
+        ratingLabel.innerHTML = '<span style="color: #10b981; font-weight: 700; font-size: 0.9rem;">🚀 Abriendo tu Google Reviews en pestaña nueva...</span>';
+      }
+      setTimeout(() => {
+        window.open(targetUrl, '_blank');
+        setTimeout(resetFunnel, 3000);
+      }, 400);
+      return;
+    }
+
+    // On real standalone mobile or desktop browser:
     setTimeout(() => {
       window.location.href = targetUrl;
     }, 350);
