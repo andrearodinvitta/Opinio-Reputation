@@ -35,13 +35,13 @@ async function initDashboard() {
   loadEmailLogs();
   initQrStudio();
 
-  // Auto-refresh stats and reviews in real-time every 8 seconds
+  // Auto-refresh stats and reviews in real-time every 5 seconds
   setInterval(() => {
     if (currentBusiness) {
       loadStats();
-      loadReviews();
+      loadReviews(true);
     }
-  }, 8000);
+  }, 5000);
 }
 
 // ---------------------------------------------------------------------------
@@ -237,19 +237,51 @@ function renderStats(stats) {
 // Reviews Feed Management
 // ---------------------------------------------------------------------------
 
-async function loadReviews() {
+async function loadReviews(isBackground = false) {
   const container = document.getElementById('reviewsFeedContainer');
-  container.innerHTML = `<p style="color: var(--text-muted); padding: 2rem 0; text-align: center;">Cargando opiniones...</p>`;
+  if (!container) return;
+
+  const storageKey = currentBusiness ? `opinio_reviews_cache_${currentBusiness.id}` : 'opinio_reviews_cache';
+
+  // Load from local storage cache first if currentReviews is empty
+  if (currentReviews.length === 0) {
+    try {
+      const cached = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      if (cached && cached.length > 0) {
+        currentReviews = cached;
+        renderReviewsFeed();
+        renderUrgentFeedback();
+      } else if (!isBackground) {
+        container.innerHTML = `<p style="color: var(--text-muted); padding: 2rem 0; text-align: center;">Cargando opiniones...</p>`;
+      }
+    } catch(e) {}
+  }
 
   try {
     const res = await authFetch('/api/business/reviews');
     if (!res.ok) throw new Error('Error al cargar reviews');
     const data = await res.json();
-    currentReviews = data.reviews || [];
+    const serverReviews = data.reviews || [];
+
+    // Merge server reviews + local cache without duplicates
+    const mergedMap = new Map();
+    serverReviews.forEach(r => mergedMap.set(r.id, r));
+    currentReviews.forEach(r => {
+      if (!mergedMap.has(r.id)) mergedMap.set(r.id, r);
+    });
+
+    currentReviews = Array.from(mergedMap.values()).sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(currentReviews));
+    } catch(e) {}
+
     renderReviewsFeed();
     renderUrgentFeedback();
   } catch (err) {
-    container.innerHTML = `<p style="color: var(--danger); padding: 2rem 0;">Error al cargar las opiniones.</p>`;
+    console.warn('Error loading reviews:', err);
+    if (currentReviews.length === 0 && !isBackground) {
+      container.innerHTML = `<p style="color: var(--danger); padding: 2rem 0; text-align: center;">Error al conectar con el servidor.</p>`;
+    }
   }
 }
 

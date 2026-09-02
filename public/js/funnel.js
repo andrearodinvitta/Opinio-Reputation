@@ -267,6 +267,7 @@ async function handleFeedbackSubmit(e) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         review_id: currentReviewId,
+        rating: currentRating || 2,
         comment,
         customer_name,
         customer_contact,

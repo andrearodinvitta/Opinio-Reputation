@@ -1638,18 +1638,34 @@ class RequestHandler(BaseHTTPRequestHandler):
                 self.send_error_json("Negocio no encontrado", 404)
                 return
 
+            rating_val = body.get('rating') or 2
+            try:
+                rating_val = int(rating_val)
+            except Exception:
+                rating_val = 2
+
             if review_id:
                 cursor.execute("""
                 UPDATE reviews
                 SET customer_name = ?, customer_contact = ?, customer_email = ?, category = ?, comment = ?
                 WHERE id = ? AND business_id = ?
                 """, (customer_name, customer_contact, customer_email, category, comment, review_id, business['id']))
+                if cursor.rowcount == 0:
+                    cursor.execute("""
+                    INSERT INTO reviews (business_id, rating, sentiment, category, customer_name, customer_contact, customer_email, comment, status)
+                    VALUES (?, ?, 'negative', ?, ?, ?, ?, ?, 'new')
+                    """, (business['id'], rating_val, category, customer_name, customer_contact, customer_email, comment))
+                    review_id = cursor.lastrowid
             else:
                 cursor.execute("""
                 INSERT INTO reviews (business_id, rating, sentiment, category, customer_name, customer_contact, customer_email, comment, status)
-                VALUES (?, 2, 'negative', ?, ?, ?, ?, ?, 'new')
-                """, (business['id'], category, customer_name, customer_contact, customer_email, comment))
+                VALUES (?, ?, 'negative', ?, ?, ?, ?, ?, 'new')
+                """, (business['id'], rating_val, category, customer_name, customer_contact, customer_email, comment))
                 review_id = cursor.lastrowid
+
+            cursor.execute("SELECT * FROM reviews WHERE id = ?", (review_id,))
+            created_row = cursor.fetchone()
+            created_review = dict(created_row) if created_row else {}
 
             if business['notify_on_negative']:
                 recipient = business['notification_email'] or business['email']
@@ -1658,8 +1674,8 @@ class RequestHandler(BaseHTTPRequestHandler):
 
                 cursor.execute("""
                 INSERT INTO email_logs (business_id, to_email, subject, body, customer_name, rating, log_type)
-                VALUES (?, ?, ?, ?, ?, 2, 'feedback_alert')
-                """, (business['id'], recipient, subject, email_body, customer_name))
+                VALUES (?, ?, ?, ?, ?, ?, 'feedback_alert')
+                """, (business['id'], recipient, subject, email_body, customer_name, rating_val))
                 print(f"[EMAIL DISPATCHED] To: {recipient} | Subject: {subject}")
 
             conn.commit()
@@ -1667,6 +1683,8 @@ class RequestHandler(BaseHTTPRequestHandler):
 
             self.send_json({
                 "success": True,
+                "review_id": review_id,
+                "review": created_review,
                 "message": "Tu mensaje ha sido entregado en privado a la gerencia del negocio. ¡Muchas gracias por tu tiempo y sinceridad!"
             })
             return
