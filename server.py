@@ -109,27 +109,43 @@ def sync_bundled_db():
         if os.path.exists(bundled_db):
             try:
                 import shutil
-                if not os.path.exists(DB_PATH) or os.path.getmtime(bundled_db) > os.path.getmtime(DB_PATH):
+                if not os.path.exists(DB_PATH):
                     shutil.copy2(bundled_db, DB_PATH)
-                    print(f"[Vercel] Synced database to {DB_PATH}")
-                else:
-                    # Merge any newly added businesses from bundled_db into /tmp/reputation.db
-                    conn_tmp = sqlite3.connect(DB_PATH)
-                    cur_tmp = conn_tmp.cursor()
-                    conn_b = sqlite3.connect(bundled_db)
-                    conn_b.row_factory = sqlite3.Row
-                    cur_b = conn_b.cursor()
-                    for biz in cur_b.execute("SELECT * FROM businesses").fetchall():
-                        cur_tmp.execute("SELECT id FROM businesses WHERE slug = ? OR email = ?", (biz['slug'], biz['email']))
-                        if not cur_tmp.fetchone():
-                            cols = biz.keys()
-                            placeholders = ','.join(['?'] * len(cols))
-                            col_names = ','.join(cols)
-                            cur_tmp.execute(f"INSERT OR REPLACE INTO businesses ({col_names}) VALUES ({placeholders})", tuple(biz))
-                            conn_tmp.commit()
-                            print(f"[Vercel] Synced business {biz['slug']} into /tmp/reputation.db")
-                    conn_tmp.close()
-                    conn_b.close()
+                    print(f"[Vercel] Initialized database at {DB_PATH}")
+                    return
+
+                # If DB_PATH exists, NEVER wipe it with shutil.copy2!
+                # Only sync businesses/superadmins from bundled_db into DB_PATH so reviews accumulate permanently
+                conn_tmp = sqlite3.connect(DB_PATH)
+                conn_tmp.row_factory = sqlite3.Row
+                cur_tmp = conn_tmp.cursor()
+
+                conn_b = sqlite3.connect(bundled_db)
+                conn_b.row_factory = sqlite3.Row
+                cur_b = conn_b.cursor()
+
+                for biz in cur_b.execute("SELECT * FROM businesses").fetchall():
+                    cur_tmp.execute("SELECT id FROM businesses WHERE id = ? OR slug = ? OR email = ?", 
+                                    (biz['id'], biz['slug'], biz['email']))
+                    existing = cur_tmp.fetchone()
+                    cols = biz.keys()
+                    placeholders = ','.join(['?'] * len(cols))
+                    col_names = ','.join(cols)
+                    if not existing:
+                        cur_tmp.execute(f"INSERT INTO businesses ({col_names}) VALUES ({placeholders})", tuple(biz))
+                    else:
+                        cur_tmp.execute("""
+                        UPDATE businesses SET 
+                            name = ?, email = ?, password_hash = ?, google_review_url = ?,
+                            primary_color = ?, accent_color = ?, welcome_title = ?, welcome_subtitle = ?,
+                            notification_email = ?, status = ?
+                        WHERE id = ?
+                        """, (biz['name'], biz['email'], biz['password_hash'], biz['google_review_url'],
+                              biz['primary_color'], biz['accent_color'], biz['welcome_title'], biz['welcome_subtitle'],
+                              biz['notification_email'], biz['status'], existing['id']))
+                conn_tmp.commit()
+                conn_tmp.close()
+                conn_b.close()
             except Exception as e:
                 print(f"[Vercel DB Sync Note] {e}")
 
