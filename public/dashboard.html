@@ -269,37 +269,59 @@
             <!-- NFC Links & Guide -->
             <div>
               <div style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.85rem; background: rgba(16, 185, 129, 0.12); color: #34d399; border-radius: 9999px; font-size: 0.8rem; font-weight: 700; margin-bottom: 0.75rem;">
-                ✓ Enlace Directo para Tarjetas NFC y Pegatinas
+                ✓ Enlace Público para Clientes, Chips NFC y Pegatinas
               </div>
 
               <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 0.5rem;">
                 Graba tu chip NFC en 30 segundos
               </h2>
 
-              <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.55; margin-bottom: 1.25rem;">
-                Copia este enlace oficial para grabarlo en tarjetas inteligentes o placas de metacrilato. Al acercar el móvil, el cliente abre el embudo al instante.
+              <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.55; margin-bottom: 1rem;">
+                Este es el enlace que debes grabar en tus tarjetas inteligentes NFC o carteles QR. Tus clientes lo abrirán desde cualquier móvil con conexión a internet.
               </p>
 
+              <!-- Domain Switcher -->
+              <div style="background: var(--bg-surface-elevated); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.85rem 1rem; margin-bottom: 1.25rem;">
+                <label class="form-label" style="font-size: 0.8rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 0.5rem; display: block;">
+                  🌐 Destino del Enlace (Selecciona Producción para tus clientes):
+                </label>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;" id="domainBtnGroup">
+                  <button type="button" id="btnModeVercel" class="btn-primary" onclick="setDomainMode('vercel')" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; width: auto; background: linear-gradient(135deg, #4f46e5, #ec4899);">
+                    🚀 Vercel (Producción Internet)
+                  </button>
+                  <button type="button" id="btnModeLocal" class="btn-secondary" onclick="setDomainMode('local')" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; width: auto;">
+                    📶 Wi-Fi Local (Pruebas)
+                  </button>
+                  <button type="button" id="btnModeCustom" class="btn-secondary" onclick="setDomainMode('custom')" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; width: auto;">
+                    ✏️ Dominio Propio
+                  </button>
+                </div>
+
+                <div id="customDomainBox" style="display: none; margin-top: 0.75rem;">
+                  <input type="url" id="customDomainInput" class="form-input" placeholder="https://tudominio.com" oninput="handleCustomDomainChange(this.value)" style="font-size: 0.85rem;">
+                </div>
+              </div>
+
               <div class="form-group">
-                <label class="form-label" style="font-weight: 700;">Enlace público de tu embudo:</label>
+                <label class="form-label" style="font-weight: 700;">Enlace público para tus clientes:</label>
                 <div style="display: flex; gap: 0.5rem;">
-                  <input type="text" id="nfcPublicUrlInput" class="form-input" readonly style="font-family: monospace; font-size: 0.88rem; background: var(--bg-surface-elevated); color: #38bdf8;">
-                  <button type="button" id="btnCopyNfcUrl" class="btn-primary" style="width: auto; padding: 0.65rem 1rem; white-space: nowrap;">
+                  <input type="text" id="nfcPublicUrlInput" class="form-input" readonly style="font-family: monospace; font-size: 0.88rem; background: var(--bg-surface-elevated); color: #38bdf8; font-weight: 600;">
+                  <button type="button" id="btnCopyNfcUrl" class="btn-primary" style="width: auto; padding: 0.65rem 1.25rem; white-space: nowrap;">
                     📋 Copiar
                   </button>
                 </div>
                 <div id="copyNfcToast" style="display: none; color: #34d399; font-size: 0.8rem; font-weight: 600; margin-top: 0.4rem;">
-                  ✓ ¡Copiado al portapapeles!
+                  ✓ ¡Enlace copiado al portapapeles! Listo para grabar en NFC o compartir.
                 </div>
               </div>
 
               <!-- Quick Steps -->
               <div style="background: var(--bg-surface-elevated); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem; margin-top: 1rem; font-size: 0.82rem; line-height: 1.5; color: var(--text-secondary);">
-                <strong style="color: var(--text-primary);">Pasos para grabar con NFC Tools (App gratuita):</strong>
+                <strong style="color: var(--text-primary);">Pasos para grabar tu chip con la app gratuita NFC Tools:</strong>
                 <ol style="padding-left: 1.2rem; margin-top: 0.4rem;">
                   <li>Abre la app <strong>NFC Tools</strong> en tu iPhone o Android.</li>
-                  <li>Ve a <strong>Escribir</strong> > <strong>Añadir un registro</strong> > <strong>URL</strong>.</li>
-                  <li>Pega tu enlace de arriba y toca <strong>Escribir</strong> acercando la tarjeta.</li>
+                  <li>Ve a <strong>Escribir</strong> > <strong>Añadir un registro</strong> > <strong>URL / Enlace</strong>.</li>
+                  <li>Pega el enlace de arriba y toca <strong>Escribir</strong> acercando la tarjeta o pegatina NFC.</li>
                 </ol>
               </div>
 

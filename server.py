@@ -521,8 +521,12 @@ class RequestHandler(BaseHTTPRequestHandler):
             if path.endswith('/qr.svg'):
                 slug = path[len('/api/funnel/'):-len('/qr.svg')].strip('/')
                 host = self.headers.get('Host') or f"localhost:{PORT}"
-                scheme = 'https' if self.headers.get('X-Forwarded-Proto') == 'https' else 'http'
-                full_url = f"{scheme}://{host}/r/{slug}"
+                if 'localhost' in host or '127.0.0.1' in host:
+                    base_url = os.environ.get('PUBLIC_BASE_URL', 'https://opinio-reputation.vercel.app')
+                    full_url = f"{base_url}/r/{slug}"
+                else:
+                    scheme = 'https' if self.headers.get('X-Forwarded-Proto') == 'https' else 'http'
+                    full_url = f"{scheme}://{host}/r/{slug}"
 
                 if HAS_QRCODE:
                     qr = qrcode.QRCode(

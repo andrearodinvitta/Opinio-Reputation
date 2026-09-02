@@ -96,19 +96,18 @@ function renderSidebarProfile(biz) {
   document.getElementById('settingNotificationEmail').value = biz.notification_email || biz.email || '';
   document.getElementById('settingNotifyOnNegative').checked = !!biz.notify_on_negative;
 
-  // Set NFC URL input
-  const nfcUrl = `${window.location.origin}/r/${biz.slug}`;
-  const nfcInput = document.getElementById('nfcPublicUrlInput');
-  if (nfcInput) nfcInput.value = nfcUrl;
+  // Set NFC URL input & QR code using public production URL by default
+  updateNfcAndQrDisplays();
 
   const btnCopyNfc = document.getElementById('btnCopyNfcUrl');
   if (btnCopyNfc) {
     btnCopyNfc.onclick = () => {
-      navigator.clipboard.writeText(nfcUrl);
+      const currentUrl = getEffectivePublicUrl();
+      navigator.clipboard.writeText(currentUrl);
       const toast = document.getElementById('copyNfcToast');
       if (toast) {
         toast.style.display = 'block';
-        setTimeout(() => toast.style.display = 'none', 3000);
+        setTimeout(() => toast.style.display = 'none', 3500);
       }
     };
   }
@@ -116,7 +115,6 @@ function renderSidebarProfile(biz) {
   // Update Printable Stand Card
   document.getElementById('printBizName').textContent = biz.name;
   document.getElementById('printBizAvatar').textContent = biz.name ? biz.name.trim()[0].toUpperCase() : '⭐';
-  document.getElementById('printShortUrl').textContent = `${window.location.host}/r/${biz.slug}`;
   if (biz.welcome_title) {
     document.getElementById('printSubtitle').textContent = biz.welcome_title;
   }
@@ -403,14 +401,105 @@ function renderUrgentFeedback() {
 }
 
 // ---------------------------------------------------------------------------
-// QR Studio & Table Tent Stand
+// QR Studio & Table Tent Stand (Smart Domain Resolution)
 // ---------------------------------------------------------------------------
+
+let selectedDomainMode = 'vercel';
+let customDomainValue = '';
+
+function getEffectivePublicUrl() {
+  if (!currentBusiness) return '';
+  const slug = currentBusiness.slug;
+  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+  if (!isLocal) {
+    // If deployed on Vercel or public domain, use active origin
+    return `${window.location.origin}/r/${slug}`;
+  }
+
+  // If viewing on localhost on Mac
+  if (selectedDomainMode === 'vercel') {
+    return `https://opinio-reputation.vercel.app/r/${slug}`;
+  } else if (selectedDomainMode === 'local') {
+    const localIp = (currentBusiness && currentBusiness.local_base_url) ? currentBusiness.local_base_url : 'http://192.168.1.34:8080';
+    return `${localIp}/r/${slug}`;
+  } else if (selectedDomainMode === 'custom' && customDomainValue) {
+    let base = customDomainValue.trim().replace(/\/+$/, '');
+    if (!base.startsWith('http://') && !base.startsWith('https://')) {
+      base = 'https://' + base;
+    }
+    return `${base}/r/${slug}`;
+  }
+
+  return `https://opinio-reputation.vercel.app/r/${slug}`;
+}
+
+function setDomainMode(mode) {
+  selectedDomainMode = mode;
+  
+  const btnVercel = document.getElementById('btnModeVercel');
+  const btnLocal = document.getElementById('btnModeLocal');
+  const btnCustom = document.getElementById('btnModeCustom');
+  const customBox = document.getElementById('customDomainBox');
+
+  [btnVercel, btnLocal, btnCustom].forEach(b => {
+    if (b) {
+      b.className = 'btn-secondary';
+      b.style.background = '';
+      b.style.color = '';
+    }
+  });
+
+  if (mode === 'vercel' && btnVercel) {
+    btnVercel.className = 'btn-primary';
+    btnVercel.style.background = 'linear-gradient(135deg, #4f46e5, #ec4899)';
+    if (customBox) customBox.style.display = 'none';
+  } else if (mode === 'local' && btnLocal) {
+    btnLocal.className = 'btn-primary';
+    btnLocal.style.background = 'linear-gradient(135deg, #059669, #10b981)';
+    if (customBox) customBox.style.display = 'none';
+  } else if (mode === 'custom' && btnCustom) {
+    btnCustom.className = 'btn-primary';
+    btnCustom.style.background = 'linear-gradient(135deg, #2563eb, #38bdf8)';
+    if (customBox) customBox.style.display = 'block';
+  }
+
+  updateNfcAndQrDisplays();
+}
+
+function handleCustomDomainChange(val) {
+  customDomainValue = val;
+  updateNfcAndQrDisplays();
+}
+
+function updateNfcAndQrDisplays() {
+  if (!currentBusiness) return;
+  const effectiveUrl = getEffectivePublicUrl();
+
+  // 1. NFC input
+  const nfcInput = document.getElementById('nfcPublicUrlInput');
+  if (nfcInput) nfcInput.value = effectiveUrl;
+
+  // 2. Printable Table Tent short URL
+  const printUrl = document.getElementById('printShortUrl');
+  if (printUrl) {
+    try {
+      const parsed = new URL(effectiveUrl);
+      printUrl.textContent = `${parsed.host}/r/${currentBusiness.slug}`;
+    } catch(e) {
+      printUrl.textContent = effectiveUrl;
+    }
+  }
+
+  // 3. QR Studio
+  initQrStudio();
+}
 
 function initQrStudio() {
   if (!currentBusiness) return;
   const qrContainer = document.getElementById('qrCanvasContainer');
   if (qrContainer) {
-    const fullFunnelUrl = `${window.location.origin}/r/${currentBusiness.slug}`;
+    const fullFunnelUrl = getEffectivePublicUrl();
     qrContainer.innerHTML = '';
     
     if (typeof QRCode !== 'undefined') {
