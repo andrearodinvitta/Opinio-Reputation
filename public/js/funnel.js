@@ -143,7 +143,42 @@ async function selectRating(rating) {
 
   const slug = getSlugFromUrl();
 
-  // Send rating to server
+  // -------------------------------------------------------------------------
+  // POSITIVE RATING (4 or 5 Stars): REDIRECT IMMEDIATELY TO GOOGLE REVIEWS!
+  // -------------------------------------------------------------------------
+  if (rating >= 4) {
+    const ratingLabel = document.getElementById('ratingLabel');
+    if (ratingLabel) {
+      ratingLabel.innerHTML = '<span style="color: #10b981; font-weight: 700; font-size: 1rem;">🎉 ¡Excelente! Abriendo Google Reviews...</span>';
+    }
+
+    const defaultSearchQuery = encodeURIComponent((businessData && businessData.name ? businessData.name : 'negocio') + ' opiniones google');
+    const targetUrl = (businessData && businessData.google_review_url && businessData.google_review_url.startsWith('http'))
+      ? businessData.google_review_url
+      : `https://www.google.com/search?q=${defaultSearchQuery}`;
+
+    // Send analytics event to server asynchronously (non-blocking)
+    try {
+      fetch(`/api/funnel/${slug}/rating`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating }),
+        keepalive: true
+      });
+    } catch (e) {
+      console.error('Error logging rating:', e);
+    }
+
+    // Direct and instant redirection to Google Reviews (350ms for visual feedback)
+    setTimeout(() => {
+      window.location.href = targetUrl;
+    }, 350);
+    return;
+  }
+
+  // -------------------------------------------------------------------------
+  // NEGATIVE RATING (1, 2 or 3 Stars): PRIVATE CONFIDENTIAL FEEDBACK FORM
+  // -------------------------------------------------------------------------
   try {
     const res = await fetch(`/api/funnel/${slug}/rating`, {
       method: 'POST',
@@ -151,66 +186,23 @@ async function selectRating(rating) {
       body: JSON.stringify({ rating })
     });
     const data = await res.json();
-    if (data.success) {
+    if (data && data.success) {
       currentReviewId = data.review_id;
-
-      // FILTERING LOGIC
-      if (rating >= 4) {
-        // POSITIVE: Show Google flow
-        showPositiveFlow(data.google_review_url || businessData.google_review_url);
-      } else {
-        // NEGATIVE: Show private interception form
-        showNegativeFlow();
-      }
     }
   } catch (err) {
     console.error('Error sending rating:', err);
-    if (rating >= 4) {
-      showPositiveFlow(businessData.google_review_url);
-    } else {
-      showNegativeFlow();
-    }
   }
+
+  showNegativeFlow();
 }
 
 function showPositiveFlow(googleUrl) {
-  document.getElementById('ratingStep').style.display = 'none';
-  document.getElementById('negativeStep').style.display = 'none';
-  document.getElementById('positiveStep').style.display = 'block';
-
-  const defaultSearchQuery = encodeURIComponent((businessData && businessData.name ? businessData.name : 'negocio') + ' opiniones google');
-  const targetUrl = (googleUrl && googleUrl.startsWith('http')) 
-    ? googleUrl 
+  const targetUrl = (googleUrl && googleUrl.startsWith('http'))
+    ? googleUrl
     : (businessData && businessData.google_review_url && businessData.google_review_url.startsWith('http'))
-      ? businessData.google_review_url 
-      : `https://www.google.com/search?q=${defaultSearchQuery}`;
-
-  const redirectBtn = document.getElementById('googleRedirectBtn');
-  if (redirectBtn) {
-    redirectBtn.href = targetUrl;
-    redirectBtn.onclick = (e) => {
-      e.preventDefault();
-      if (countdownTimer) clearInterval(countdownTimer);
-      window.location.href = targetUrl;
-    };
-  }
-
-  // Auto redirect countdown (2 seconds) with direct location navigation (no popup blocker)
-  let timeLeft = 2;
-  const countdownEl = document.getElementById('countdownSeconds');
-  const countdownBox = document.getElementById('countdownBox');
-
-  if (countdownTimer) clearInterval(countdownTimer);
-
-  countdownTimer = setInterval(() => {
-    timeLeft -= 1;
-    if (countdownEl) countdownEl.textContent = timeLeft;
-    if (timeLeft <= 0) {
-      clearInterval(countdownTimer);
-      if (countdownBox) countdownBox.innerHTML = `<span>✓ Redirigiendo a Google...</span>`;
-      window.location.href = targetUrl;
-    }
-  }, 1000);
+      ? businessData.google_review_url
+      : `https://www.google.com/search?q=${encodeURIComponent((businessData ? businessData.name : 'negocio') + ' opiniones google')}`;
+  window.location.href = targetUrl;
 }
 
 function showNegativeFlow() {
