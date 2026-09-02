@@ -347,29 +347,8 @@ def seed_data(cursor):
     """, (default_pw,))
     b2_id = cursor.lastrowid
 
-    reviews_data = [
-        (b1_id, 5, 'positive', 'Calidad del servicio', 'Camila R.', '', '', '', 'resolved', 1),
-        (b1_id, 5, 'positive', 'Atención y personal', 'Valeria M.', '', '', '', 'resolved', 2),
-        (b1_id, 4, 'positive', 'Instalaciones y ambiente', 'Lucía P.', '', '', '', 'resolved', 3),
-        (b1_id, 2, 'negative', 'Calidad del servicio', 'Mariana Torres', '+34612345678', 'mariana.torres@gmail.com', 'La manicura se empezó a descascarillar a los dos días y la espera fue de 25 minutos.', 'new', 0),
-        (b1_id, 1, 'negative', 'Atención y personal', 'Sofía Gómez', '+34699332211', 'sofia.gomez@gmail.com', 'El trato en recepción fue un poco seco y no tenían el tono de esmalte que reservé.', 'contacted', 4),
-        (b1_id, 5, 'positive', 'Atención y personal', 'Elena Ruiz', '', '', '', 'resolved', 5),
-        (b1_id, 5, 'positive', 'Calidad del servicio', 'Claudia N.', '', '', '', 'resolved', 6),
-        (b1_id, 3, 'negative', 'Instalaciones y ambiente', 'Ana Belén', '+34699112233', '', 'El resultado final estuvo bien pero en el salón hacía demasiado calor y el aire no funcionaba.', 'resolved', 7),
-        (b1_id, 5, 'positive', 'Calidad del servicio', 'Paula Sánchez', '', '', '', 'resolved', 8),
-
-        (b2_id, 5, 'positive', 'Calidad del servicio', 'Carlos M.', '', '', '', 'resolved', 1),
-        (b2_id, 5, 'positive', 'Atención y personal', 'Javier Ortiz', '', '', '', 'resolved', 2),
-        (b2_id, 2, 'negative', 'Tiempo de espera', 'Gonzalo Vidal', '+34644556677', 'gonzalo.vidal@empresa.es', 'La pasta trufada llegó casi fría y tardaron 40 min en traer la cuenta.', 'new', 0),
-        (b2_id, 4, 'positive', 'Calidad del servicio', 'Marta L.', '', '', '', 'resolved', 3),
-    ]
-
-    for b_id, rating, sentiment, cat, name, contact, email, comment, status, days_ago in reviews_data:
-        date_str = (now - timedelta(days=days_ago, hours=rating)).strftime('%Y-%m-%d %H:%M:%S')
-        cursor.execute("""
-        INSERT INTO reviews (business_id, rating, sentiment, category, customer_name, customer_contact, customer_email, comment, status, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (b_id, rating, sentiment, cat, name, contact, email, comment, status, date_str))
+    # No fake reviews are seeded. Only real reviews submitted via the public funnel link are stored.
+    print("[DB] Businesses seeded with clean zero-review state.")
 
 # ---------------------------------------------------------------------------
 # HTTP Handler & Router
