@@ -152,19 +152,22 @@ async function selectRating(rating) {
       ratingLabel.innerHTML = '<span style="color: #10b981; font-weight: 700; font-size: 1rem;">🎉 ¡Excelente! Abriendo Google Reviews...</span>';
     }
 
-    const defaultSearchQuery = encodeURIComponent((businessData && businessData.name ? businessData.name : 'negocio') + ' opiniones google');
-    const targetUrl = (businessData && businessData.google_review_url && businessData.google_review_url.startsWith('http'))
+    let finalTargetUrl = (businessData && businessData.google_review_url && businessData.google_review_url.startsWith('http'))
       ? businessData.google_review_url
       : `https://www.google.com/search?q=${defaultSearchQuery}`;
 
-    // Send analytics event to server asynchronously (non-blocking)
+    // Ensure rating is 100% saved in the database before redirecting
     try {
-      fetch(`/api/funnel/${slug}/rating`, {
+      const res = await fetch(`/api/funnel/${slug}/rating`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rating }),
         keepalive: true
       });
+      const data = await res.json();
+      if (data && data.google_review_url && data.google_review_url.startsWith('http')) {
+        finalTargetUrl = data.google_review_url;
+      }
     } catch (e) {
       console.error('Error logging rating:', e);
     }
@@ -177,16 +180,16 @@ async function selectRating(rating) {
         ratingLabel.innerHTML = '<span style="color: #10b981; font-weight: 700; font-size: 0.9rem;">🚀 Abriendo tu Google Reviews en pestaña nueva...</span>';
       }
       setTimeout(() => {
-        window.open(targetUrl, '_blank');
+        window.open(finalTargetUrl, '_blank');
         setTimeout(resetFunnel, 3000);
-      }, 400);
+      }, 350);
       return;
     }
 
     // On real standalone mobile or desktop browser:
     setTimeout(() => {
-      window.location.href = targetUrl;
-    }, 350);
+      window.location.href = finalTargetUrl;
+    }, 300);
     return;
   }
 

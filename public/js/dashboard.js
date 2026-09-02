@@ -34,6 +34,14 @@ async function initDashboard() {
   loadReviews();
   loadEmailLogs();
   initQrStudio();
+
+  // Auto-refresh stats and reviews in real-time every 8 seconds
+  setInterval(() => {
+    if (currentBusiness) {
+      loadStats();
+      loadReviews();
+    }
+  }, 8000);
 }
 
 // ---------------------------------------------------------------------------
@@ -277,6 +285,36 @@ function createReviewCardHtml(r) {
   const isPositive = r.sentiment === 'positive';
   const starsDisplay = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
 
+  // -------------------------------------------------------------------------
+  // 1. POSITIVE REVIEW CARD (4 & 5 STARS -> GOOGLE REVIEW)
+  // -------------------------------------------------------------------------
+  if (isPositive) {
+    return `
+      <div class="review-card positive-card" data-id="${r.id}" style="background: var(--bg-surface); border: 1px solid rgba(16, 185, 129, 0.35); border-left: 5px solid #10b981; border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; margin-bottom: 1.25rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.6rem;">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span style="font-size: 1.25rem; font-weight: 800; color: #fbbf24;">${starsDisplay}</span>
+            <span class="status-chip approved">🚀 Google Reviews</span>
+            <span style="font-size: 0.8rem; background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 700;">
+              ${r.rating} Estrellas • Calificación Positiva
+            </span>
+          </div>
+          <span style="font-size: 0.78rem; color: var(--text-muted);">${dateFormatted}</span>
+        </div>
+
+        <div style="margin-top: 0.4rem; font-size: 0.9rem; color: var(--text-primary);">
+          ${r.customer_name ? `<strong style="color: var(--text-primary);">👤 ${escapeHtml(r.customer_name)}</strong> ` : '<span style="color: var(--text-secondary);">👤 Cliente de Google</span> — '}
+          <span style="color: #34d399; font-weight: 600;">✓ Calificó con ${r.rating} estrellas y fue redirigido a publicar su reseña en tu ficha de Google Maps.</span>
+        </div>
+
+        ${r.comment ? `<div class="review-comment" style="margin-top: 0.6rem; background: var(--bg-surface-elevated); padding: 0.6rem 0.85rem; border-radius: 6px; font-style: italic;">"${escapeHtml(r.comment)}"</div>` : ''}
+      </div>
+    `;
+  }
+
+  // -------------------------------------------------------------------------
+  // 2. NEGATIVE / PRIVATE REVIEW CARD (1, 2 & 3 STARS -> PRIVATE FEEDBACK)
+  // -------------------------------------------------------------------------
   const cleanPhone = r.customer_contact ? r.customer_contact.replace(/[^0-9+]/g, '') : '';
   const customerName = r.customer_name || 'Cliente';
   const bizName = currentBusiness ? currentBusiness.name : 'nuestro negocio';
@@ -287,20 +325,20 @@ function createReviewCardHtml(r) {
   const whatsappUrl = cleanPhone ? `https://wa.me/${cleanPhone.replace('+', '')}?text=${encodeURIComponent(defaultWaMsg)}` : '#';
 
   const statusBadges = {
-    new: '<span class="status-chip pending">🔴 Nuevo</span>',
+    new: '<span class="status-chip pending">🔴 Pendiente</span>',
     contacted: '<span class="status-chip warning">🟡 Contactado</span>',
     resolved: '<span class="status-chip approved">🟢 Resuelto</span>'
   };
 
   return `
-    <div class="review-card" data-id="${r.id}" style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1.25rem;">
+    <div class="review-card" data-id="${r.id}" style="background: var(--bg-surface); border: 1px solid rgba(239, 68, 68, 0.35); border-left: 5px solid #ef4444; border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1.25rem;">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
         <div style="display: flex; align-items: center; gap: 0.75rem;">
-          <span style="font-size: 1.2rem; font-weight: 800; color: ${isPositive ? '#fbbf24' : '#f87171'};">${starsDisplay}</span>
-          <span style="font-size: 0.8rem; background: var(--bg-surface-elevated); padding: 0.2rem 0.5rem; border-radius: 4px; color: var(--text-secondary); font-weight: 600;">
-            ${r.category || 'General'}
+          <span style="font-size: 1.2rem; font-weight: 800; color: #f87171;">${starsDisplay}</span>
+          <span style="font-size: 0.8rem; background: rgba(239, 68, 68, 0.15); padding: 0.2rem 0.5rem; border-radius: 4px; color: #f87171; font-weight: 700;">
+            🛡️ ${r.category || 'Feedback Privado'}
           </span>
-          ${!isPositive ? (statusBadges[r.status] || '') : '<span class="status-chip approved">Google Review</span>'}
+          ${statusBadges[r.status] || ''}
         </div>
         <span style="font-size: 0.78rem; color: var(--text-muted);">${dateFormatted}</span>
       </div>
@@ -310,34 +348,32 @@ function createReviewCardHtml(r) {
           <span>👤 ${escapeHtml(r.customer_name || 'Cliente anónimo')}</span>
           ${r.customer_contact ? `<span style="font-size: 0.8rem; font-weight: 400; color: #38bdf8;">(${escapeHtml(r.customer_contact)})</span>` : ''}
         </div>
-        ${r.comment ? `<div class="review-comment" style="margin-top: 0.5rem;">"${escapeHtml(r.comment)}"</div>` : '<div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.3rem;">(Sin comentario adicional escrito)</div>'}
+        ${r.comment ? `<div class="review-comment" style="margin-top: 0.5rem; background: var(--bg-surface-elevated); padding: 0.75rem 1rem; border-radius: 6px; font-style: italic; color: #fca5a5;">"${escapeHtml(r.comment)}"</div>` : '<div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.3rem;">(Sin comentario adicional escrito)</div>'}
       </div>
 
-      ${!isPositive ? `
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; border-top: 1px solid var(--border-color); padding-top: 0.85rem; margin-top: 0.85rem;">
-          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-            ${cleanPhone ? `
-              <a href="${whatsappUrl}" target="_blank" class="action-btn-sm action-btn-whatsapp" title="Abrir chat de WhatsApp con plantilla personalizada">
-                💬 Resolver por WhatsApp
-              </a>
-            ` : ''}
-            ${r.customer_contact && !cleanPhone.startsWith('+') ? `
-              <a href="tel:${r.customer_contact}" class="action-btn-sm">
-                📞 Llamar
-              </a>
-            ` : ''}
-          </div>
-
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <label style="font-size: 0.78rem; color: var(--text-muted);">Estado:</label>
-            <select class="form-input status-select" data-id="${r.id}" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; width: auto; background: var(--bg-surface-elevated);">
-              <option value="new" ${r.status === 'new' ? 'selected' : ''}>🔴 Pendiente</option>
-              <option value="contacted" ${r.status === 'contacted' ? 'selected' : ''}>🟡 Contactado</option>
-              <option value="resolved" ${r.status === 'resolved' ? 'selected' : ''}>🟢 Resuelto</option>
-            </select>
-          </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; border-top: 1px solid var(--border-color); padding-top: 0.85rem; margin-top: 0.85rem;">
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          ${cleanPhone ? `
+            <a href="${whatsappUrl}" target="_blank" class="action-btn-sm action-btn-whatsapp" style="background: #25D366; color: #ffffff; font-weight: 700; text-decoration: none; padding: 0.45rem 0.85rem; border-radius: 6px; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 0.3rem;" title="Abrir chat de WhatsApp">
+              💬 Resolver por WhatsApp
+            </a>
+          ` : ''}
+          ${r.customer_contact && !cleanPhone.startsWith('+') ? `
+            <a href="tel:${r.customer_contact}" class="action-btn-sm" style="text-decoration: none; padding: 0.45rem 0.85rem; border-radius: 6px; font-size: 0.82rem;">
+              📞 Llamar
+            </a>
+          ` : ''}
         </div>
-      ` : ''}
+
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <label style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">Estado:</label>
+          <select class="form-input status-select" data-id="${r.id}" style="padding: 0.3rem 0.6rem; font-size: 0.82rem; width: auto; background: var(--bg-surface-elevated); font-weight: 600;">
+            <option value="new" ${r.status === 'new' ? 'selected' : ''}>🔴 Pendiente</option>
+            <option value="contacted" ${r.status === 'contacted' ? 'selected' : ''}>🟡 Contactado</option>
+            <option value="resolved" ${r.status === 'resolved' ? 'selected' : ''}>🟢 Resuelto</option>
+          </select>
+        </div>
+      </div>
     </div>
   `;
 }
@@ -378,26 +414,51 @@ function bindReviewCardEvents() {
 
 function renderUrgentFeedback() {
   const container = document.getElementById('urgentFeedbackList');
-  const urgent = currentReviews.filter(r => r.sentiment === 'negative' && r.status === 'new').slice(0, 3);
+  if (!container) return;
 
-  if (urgent.length === 0) {
+  if (currentReviews.length === 0) {
     container.innerHTML = `
-      <div style="padding: 1.5rem; text-align: center; color: var(--success); font-size: 0.88rem; font-weight: 600;">
-        🎉 ¡Excelente! No tienes feedback negativo pendiente por resolver.
+      <div style="padding: 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.88rem;">
+        📭 Aún no has recibido opiniones. Comparte tu cartel QR o graba tu tarjeta NFC para empezar.
       </div>
     `;
     return;
   }
 
-  container.innerHTML = urgent.map(r => `
-    <div style="background: var(--bg-surface-elevated); border-left: 3px solid #ef4444; border-radius: var(--radius-sm); padding: 0.75rem 1rem; margin-bottom: 0.6rem;">
-      <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.2rem;">
-        <span style="font-weight: 700; color: #ef4444;">${'★'.repeat(r.rating)} ${escapeHtml(r.customer_name || 'Cliente')}</span>
-        <span>${r.category || 'General'}</span>
-      </div>
-      <div style="font-size: 0.85rem; color: var(--text-primary); font-style: italic;">"${escapeHtml(r.comment || 'Sin comentario')}"</div>
-    </div>
-  `).join('');
+  // Show top 4 most recent reviews (both positive and negative)
+  const recent = currentReviews.slice(0, 4);
+
+  container.innerHTML = recent.map(r => {
+    const isPos = r.sentiment === 'positive';
+    const stars = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+    const dateFormatted = r.created_at ? new Date(r.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+
+    if (isPos) {
+      return `
+        <div style="background: var(--bg-surface-elevated); border-left: 4px solid #10b981; border-radius: var(--radius-sm); padding: 0.75rem 1rem; margin-bottom: 0.6rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; margin-bottom: 0.2rem;">
+            <span style="font-weight: 800; color: #fbbf24;">${stars}</span>
+            <span style="color: #34d399; font-weight: 700; font-size: 0.75rem;">🚀 Google Review</span>
+          </div>
+          <div style="font-size: 0.85rem; color: var(--text-primary);">
+            ${escapeHtml(r.customer_name || 'Cliente')} <span style="color: #34d399; font-size: 0.8rem;">(Calificación de 5 estrellas)</span>
+          </div>
+        </div>
+      `;
+    } else {
+      return `
+        <div style="background: var(--bg-surface-elevated); border-left: 4px solid #ef4444; border-radius: var(--radius-sm); padding: 0.75rem 1rem; margin-bottom: 0.6rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; margin-bottom: 0.2rem;">
+            <span style="font-weight: 800; color: #f87171;">${stars} • ${escapeHtml(r.customer_name || 'Cliente')}</span>
+            <span style="color: #f87171; font-weight: 700; font-size: 0.75rem;">🛡️ ${r.category || 'Privado'}</span>
+          </div>
+          <div style="font-size: 0.82rem; color: var(--text-secondary); font-style: italic; margin-top: 0.2rem;">
+            "${escapeHtml(r.comment || 'Sin comentario')}"
+          </div>
+        </div>
+      `;
+    }
+  }).join('');
 }
 
 // ---------------------------------------------------------------------------
