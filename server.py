@@ -59,6 +59,17 @@ def get_local_ip():
     except Exception:
         return "127.0.0.1"
 
+def slugify(text: str) -> str:
+    text = (text or '').lower().strip()
+    replacements = {
+        'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ü': 'u', 'ñ': 'n',
+        'à': 'a', 'è': 'e', 'ì': 'i', 'ò': 'o', 'ù': 'u', 'ç': 'c'
+    }
+    for k, v in replacements.items():
+        text = text.replace(k, v)
+    slug = re.sub(r'[^a-z0-9]+', '-', text).strip('-')
+    return slug or "negocio"
+
 def get_public_base_url():
     tunnel_log = os.path.join(BASE_DIR, "tunnel.log")
     if os.path.exists(tunnel_log):
@@ -239,7 +250,7 @@ def init_db():
     # Check if business_id has NOT NULL constraint and migrate if needed
     try:
         cursor.execute("PRAGMA table_info(email_logs);")
-        cols = {row['name']: row for row in cursor.fetchall()}
+        cols = {row['name']: dict(row) for row in cursor.fetchall()}
         if cols.get('business_id', {}).get('notnull') == 1 or 'log_type' not in cols:
             cursor.execute("CREATE TABLE email_logs_temp AS SELECT * FROM email_logs;")
             cursor.execute("DROP TABLE email_logs;")
@@ -977,6 +988,128 @@ class RequestHandler(BaseHTTPRequestHandler):
             return
 
         # -------------------------------------------------------------------
+        # 1b. AUTH: Business Direct Registration ("Crear Cuenta")
+        # -------------------------------------------------------------------
+        if path == '/api/auth/register':
+            applicant_name = (body.get('applicant_name') or body.get('name') or '').strip()
+            business_name = (body.get('business_name') or '').strip()
+            email = (body.get('email') or '').strip().lower()
+            password = body.get('password') or ''
+            phone = (body.get('phone') or '').strip()
+            category = (body.get('category') or 'General').strip()
+            city = (body.get('city') or '').strip()
+            google_maps_url = (body.get('google_maps_url') or '').strip()
+
+            if not business_name:
+                self.send_error_json("El nombre del negocio es obligatorio.")
+                return
+            if not email or '@' not in email:
+                self.send_error_json("Debes ingresar un correo electrónico válido.")
+                return
+            if not password or len(password) < 4:
+                self.send_error_json("La contraseña debe tener al menos 4 caracteres.")
+                return
+
+            if not applicant_name:
+                applicant_name = business_name
+
+            conn = get_db()
+            cursor = conn.cursor()
+
+            # Check if business already exists
+            cursor.execute("SELECT id FROM businesses WHERE email = ?", (email,))
+            if cursor.fetchone():
+                conn.close()
+                self.send_error_json("Ya existe una cuenta registrada con este correo. Por favor inicia sesión.", 409)
+                return
+
+            # Generate unique slug
+            raw_slug = slugify(business_name)
+            slug = raw_slug
+            counter = 1
+            while True:
+                cursor.execute("SELECT id FROM businesses WHERE slug = ?", (slug,))
+                if not cursor.fetchone():
+                    break
+                counter += 1
+                slug = f"{raw_slug}-{counter}"
+
+            hashed_pw = hash_password(password)
+            now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+            try:
+                # 1. Insert or update access request
+                cursor.execute("SELECT id FROM access_requests WHERE email = ?", (email,))
+                existing_req = cursor.fetchone()
+                if existing_req:
+                    req_id = existing_req['id']
+                    cursor.execute("""
+                    UPDATE access_requests
+                    SET applicant_name = ?, business_name = ?, phone = ?, category = ?, city = ?,
+                        google_maps_url = ?, status = 'approved', processed_at = ?
+                    WHERE id = ?
+                    """, (applicant_name, business_name, phone, category, city, google_maps_url, now_str, req_id))
+                else:
+                    cursor.execute("""
+                    INSERT INTO access_requests (applicant_name, business_name, email, phone, category, city, google_maps_url, status, processed_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, 'approved', ?)
+                    """, (applicant_name, business_name, email, phone, category, city, google_maps_url, now_str))
+                    req_id = cursor.lastrowid
+
+                # 2. Create business
+                cursor.execute("""
+                INSERT INTO businesses (
+                    slug, name, email, password_hash, google_review_url,
+                    notification_email, phone, category, city, status, request_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)
+                """, (
+                    slug, business_name, email, hashed_pw,
+                    google_maps_url, email, phone, category, city, req_id
+                ))
+                business_id = cursor.lastrowid
+
+                # 3. Create active session token
+                token = secrets.token_hex(32)
+                expires = (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d %H:%M:%S')
+                cursor.execute("""
+                INSERT INTO sessions (token, user_id, role, expires_at)
+                VALUES (?, ?, 'business', ?)
+                """, (token, business_id, expires))
+
+                # 4. Log welcome notification
+                cursor.execute("""
+                INSERT INTO email_logs (business_id, to_email, subject, body, customer_name, log_type)
+                VALUES (?, ?, ?, ?, ?, 'direct_registration')
+                """, (
+                    business_id,
+                    email,
+                    f"🎉 ¡Bienvenido a Opinio! Tu cuenta para {business_name} está lista",
+                    f"Hola {applicant_name},\n\nTu cuenta para '{business_name}' ha sido creada exitosamente.\n\n- Panel de Control: /dashboard\n- Enlace público para tus clientes: /r/{slug}\n\n¡Comienza ahora a proteger y potenciar tu reputación!",
+                    applicant_name
+                ))
+
+                conn.commit()
+
+                cursor.execute("SELECT * FROM businesses WHERE id = ?", (business_id,))
+                biz = cursor.fetchone()
+                biz_dict = dict(biz)
+                del biz_dict['password_hash']
+                conn.close()
+
+                cookie_header = f"session_token={token}; Path=/; Max-Age={30*24*60*60}; SameSite=Lax"
+                self.send_json({
+                    "success": True,
+                    "token": token,
+                    "business": biz_dict,
+                    "redirect": "/dashboard",
+                    "message": "¡Cuenta creada exitosamente! Bienvenido a tu panel."
+                }, status=201, cookie=cookie_header)
+            except Exception as e:
+                conn.close()
+                self.send_error_json(f"Error al registrar la cuenta: {str(e)}", 500)
+            return
+
+        # -------------------------------------------------------------------
         # 2. AUTH: Business Login (Only Approved & Active Accounts)
         # -------------------------------------------------------------------
         if path == '/api/auth/login':
@@ -990,21 +1123,19 @@ class RequestHandler(BaseHTTPRequestHandler):
             conn = get_db()
             cursor = conn.cursor()
 
-            # First check if there's a pending access request
-            cursor.execute("SELECT * FROM access_requests WHERE email = ? AND status = 'pending'", (email,))
-            pending_req = cursor.fetchone()
-            if pending_req:
-                conn.close()
-                self.send_error_json("Tu solicitud de acceso sigue en estado 'PENDIENTE' de aprobación por el administrador. Aún no puedes iniciar sesión.", 403)
-                return
-
             # Query business
             cursor.execute("SELECT * FROM businesses WHERE email = ?", (email,))
             business = cursor.fetchone()
 
             if not business:
+                # Check if there's a pending access request
+                cursor.execute("SELECT * FROM access_requests WHERE email = ? AND status = 'pending'", (email,))
+                pending_req = cursor.fetchone()
                 conn.close()
-                self.send_error_json("No existe una cuenta activa con este correo. Debes solicitar acceso previamente.", 401)
+                if pending_req:
+                    self.send_error_json("Tu solicitud previa está en revisión. Si deseas acceder de inmediato, regístrate en la pestaña 'Crear Cuenta' con tu contraseña.", 403)
+                else:
+                    self.send_error_json("No existe una cuenta registrada con este correo. Puedes crear una cuenta nueva en la pestaña 'Crear Cuenta'.", 401)
                 return
 
             if not verify_password(password, business['password_hash']):
@@ -1108,8 +1239,8 @@ class RequestHandler(BaseHTTPRequestHandler):
                 return
 
             # Generate unique slug
-            raw_slug = re.sub(r'[^a-z0-9]+', '-', req['business_name'].lower()).strip('-')
-            slug = raw_slug or "negocio"
+            raw_slug = slugify(req['business_name'])
+            slug = raw_slug
             counter = 1
             while True:
                 cursor.execute("SELECT id FROM businesses WHERE slug = ?", (slug,))

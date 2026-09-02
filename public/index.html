@@ -364,14 +364,14 @@
     </div>
   </footer>
 
-  <!-- MODAL: SOLICITAR ACCESO (STRICT APPLICATION FORM) -->
+  <!-- MODAL: CREAR CUENTA O SOLICITAR ACCESO -->
   <div id="requestAccessModal" class="modal-backdrop" style="display: none;">
     <div class="modal-card" style="max-width: 580px;">
       <div class="modal-header">
         <div>
-          <h3 style="font-size: 1.3rem; font-weight: 800; color: #ffffff;">Solicitar Acceso a la Plataforma</h3>
+          <h3 style="font-size: 1.3rem; font-weight: 800; color: #ffffff;">Crear Cuenta en Opinio</h3>
           <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 0.2rem;">
-            Tu cuenta será revisada y aprobada manualmente por el administrador.
+            Registra tu comercio y activa tu embudo inteligente de reseñas al instante.
           </p>
         </div>
         <button type="button" class="modal-close-btn" onclick="closeRequestModal()">✕</button>
@@ -388,7 +388,7 @@
 
           <div class="form-group">
             <label class="form-label" for="reqBusinessName">Nombre del Negocio *</label>
-            <input type="text" id="reqBusinessName" class="form-input" placeholder="Ej. Clínica Dental Sonrisas" required>
+            <input type="text" id="reqBusinessName" class="form-input" placeholder="Ej. Clínica Sonrisas, Café Roma..." required>
           </div>
         </div>
 
@@ -399,12 +399,17 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="reqPhone">Teléfono / WhatsApp *</label>
-            <input type="text" id="reqPhone" class="form-input" placeholder="+34 600 123 456" required>
+            <label class="form-label" for="reqPassword">Crea tu Contraseña de Acceso *</label>
+            <input type="password" id="reqPassword" class="form-input" placeholder="Mínimo 4 caracteres" minlength="4" required>
           </div>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label" for="reqPhone">Teléfono / WhatsApp *</label>
+            <input type="text" id="reqPhone" class="form-input" placeholder="+34 600 123 456" required>
+          </div>
+
           <div class="form-group">
             <label class="form-label" for="reqCategory">Categoría / Tipo de Negocio</label>
             <select id="reqCategory" class="form-input">
@@ -418,11 +423,6 @@
               <option value="Otro">Otro sector</option>
             </select>
           </div>
-
-          <div class="form-group">
-            <label class="form-label" for="reqCity">Ciudad / Localidad</label>
-            <input type="text" id="reqCity" class="form-input" placeholder="Ej. Valencia, Madrid, etc.">
-          </div>
         </div>
 
         <div class="form-group">
@@ -430,15 +430,10 @@
           <input type="url" id="reqGoogleMaps" class="form-input" placeholder="https://maps.app.goo.gl/...">
         </div>
 
-        <div class="form-group">
-          <label class="form-label" for="reqNotes">¿Cuál es tu principal objetivo o necesidad?</label>
-          <textarea id="reqNotes" class="form-textarea" rows="2" placeholder="Ej. Queremos subir la media de reseñas en Google y evitar quejas públicas..."></textarea>
-        </div>
-
         <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
           <button type="button" class="btn-secondary" onclick="closeRequestModal()">Cancelar</button>
           <button type="submit" id="btnSubmitRequest" class="btn-primary" style="background: linear-gradient(135deg, #4f46e5, #ec4899); border: none;">
-            Enviar Solicitud de Acceso
+            ✨ Crear Cuenta y Entrar al Panel
           </button>
         </div>
       </form>
@@ -447,16 +442,16 @@
       <div id="requestSuccessScreen" style="display: none; text-align: center; padding: 1.5rem 0;">
         <div style="font-size: 3rem; margin-bottom: 1rem;">🎉</div>
         <h3 style="font-size: 1.35rem; font-weight: 800; color: #10b981; margin-bottom: 0.5rem;">
-          ¡Solicitud Enviada con Éxito!
+          ¡Cuenta Creada Exitosamente!
         </h3>
         <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.55; margin-bottom: 1.5rem;">
-          Hemos registrado tu solicitud de acceso para <strong id="successBizName" style="color: #ffffff;">--</strong>.
+          Hemos activado tu cuenta para <strong id="successBizName" style="color: #ffffff;">--</strong>.
           <br><br>
-          El superadministrador revisará tus datos y recibirás un correo electrónico con tus credenciales de acceso en cuanto sea aprobada.
+          Ya puedes acceder a tu panel de control y descargar tu código QR para clientes.
         </p>
-        <button type="button" class="btn-primary" onclick="closeRequestModal()">
-          Entendido, ¡gracias!
-        </button>
+        <a id="btnSuccessDashboard" href="/dashboard" class="btn-primary" style="display: inline-block; width: auto; padding: 0.75rem 1.75rem;">
+          🚀 Ir a mi Panel de Control
+        </a>
       </div>
     </div>
   </div>
@@ -499,7 +494,7 @@
       });
     });
 
-    // Request Access Modal
+    // Request / Register Access Modal
     function openRequestModal() {
       document.getElementById('publicRequestForm').style.display = 'block';
       document.getElementById('requestSuccessScreen').style.display = 'none';
@@ -511,52 +506,65 @@
       document.getElementById('requestAccessModal').style.display = 'none';
     }
 
-    // Handle Request Form Submit
+    // Handle Form Submit (Direct Registration with Auto-Login)
     document.getElementById('publicRequestForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const applicant_name = document.getElementById('reqApplicantName').value.trim();
       const business_name = document.getElementById('reqBusinessName').value.trim();
-      const email = document.getElementById('reqEmail').value.trim();
+      const email = document.getElementById('reqEmail').value.trim().toLowerCase();
+      const password = document.getElementById('reqPassword').value;
       const phone = document.getElementById('reqPhone').value.trim();
       const category = document.getElementById('reqCategory').value;
-      const city = document.getElementById('reqCity').value.trim();
       const google_maps_url = document.getElementById('reqGoogleMaps').value.trim();
-      const notes = document.getElementById('reqNotes').value.trim();
       const alertBox = document.getElementById('requestFormAlert');
       const submitBtn = document.getElementById('btnSubmitRequest');
 
       alertBox.style.display = 'none';
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Enviando solicitud...';
+      submitBtn.textContent = 'Creando cuenta y embudo...';
 
       try {
-        const res = await fetch('/api/access-requests/submit', {
+        const res = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            applicant_name, business_name, email, phone,
-            category, city, google_maps_url, notes
+            applicant_name,
+            business_name,
+            email,
+            password,
+            phone,
+            category,
+            google_maps_url
           })
         });
         const data = await res.json();
 
         if (res.ok && data.success) {
+          if (data.token) {
+            localStorage.setItem('session_token', data.token);
+          }
           document.getElementById('publicRequestForm').style.display = 'none';
           document.getElementById('successBizName').textContent = business_name;
           document.getElementById('requestSuccessScreen').style.display = 'block';
+          
+          setTimeout(() => {
+            window.location.href = data.redirect || '/dashboard';
+          }, 1200);
         } else {
           alertBox.style.display = 'block';
           alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
           alertBox.style.color = '#ef4444';
           alertBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
-          alertBox.textContent = data.error || 'Error al enviar solicitud.';
+          alertBox.textContent = data.error || 'Error al procesar el registro.';
         }
       } catch (err) {
         alertBox.style.display = 'block';
+        alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+        alertBox.style.color = '#ef4444';
         alertBox.textContent = 'Error de conexión con el servidor.';
       } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Enviar Solicitud de Acceso';
+        submitBtn.textContent = '✨ Crear Cuenta y Entrar al Panel';
       }
     });
   </script>

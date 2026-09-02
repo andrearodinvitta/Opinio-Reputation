@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Acceso al Panel de Negocio | Opinio</title>
+  <title>Acceso y Registro al Panel de Negocio | Opinio</title>
   <link rel="stylesheet" href="/css/style.css">
   <link rel="icon" type="image/png" href="/assets/favicon.png">
 
@@ -27,7 +27,7 @@
 
     .auth-card {
       width: 100%;
-      max-width: 460px;
+      max-width: 480px;
       background: var(--bg-surface);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-xl);
@@ -36,9 +36,39 @@
       animation: fadeIn 0.35s ease-out;
     }
 
+    .auth-tabs {
+      display: flex;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 4px;
+      margin-bottom: 1.5rem;
+      gap: 4px;
+    }
+
+    .auth-tab-btn {
+      flex: 1;
+      padding: 0.65rem 0.5rem;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition);
+      text-align: center;
+    }
+
+    .auth-tab-btn.active {
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+    }
+
     .demo-accounts-box {
       margin-top: 1.5rem;
-      padding-top: 1.5rem;
+      padding-top: 1.25rem;
       border-top: 1px solid var(--border-color);
     }
 
@@ -70,24 +100,28 @@
 
   <div class="auth-page-container">
     <div class="auth-card">
-      <div style="text-align: center; margin-bottom: 1.75rem;">
+      <div style="text-align: center; margin-bottom: 1.5rem;">
         <div style="width: 52px; height: 52px; margin: 0 auto 0.75rem; background: linear-gradient(135deg, #4f46e5, #ec4899); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: #fff;">
           🛡️
         </div>
-        <h1 style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em;">Panel de Negocio</h1>
-        <p style="color: var(--text-secondary); font-size: 0.88rem; margin-top: 0.25rem;">Acceso exclusivo para comercios autorizados</p>
+        <h1 style="font-size: 1.45rem; font-weight: 800; letter-spacing: -0.02em;">Panel de Negocio</h1>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.25rem;">Opinio Reputation Shield</p>
+      </div>
+
+      <!-- Auth Tabs: Iniciar Sesión vs Crear Cuenta -->
+      <div class="auth-tabs">
+        <button type="button" id="tabLoginBtn" class="auth-tab-btn active" onclick="switchAuthTab('login')">
+          🔑 Iniciar Sesión
+        </button>
+        <button type="button" id="tabRegisterBtn" class="auth-tab-btn" onclick="switchAuthTab('register')">
+          ✨ Crear Cuenta
+        </button>
       </div>
 
       <!-- Alert Box -->
       <div id="authAlert" style="display: none; padding: 0.85rem 1rem; border-radius: var(--radius-md); font-size: 0.85rem; margin-bottom: 1.25rem; line-height: 1.45;"></div>
 
-      <!-- Notice: No open registration -->
-      <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: var(--radius-md); padding: 0.75rem 0.9rem; margin-bottom: 1.5rem; font-size: 0.82rem; color: #c7d2fe; display: flex; align-items: center; gap: 0.5rem;">
-        <span>🔒</span>
-        <span>El acceso requiere aprobación previa por parte del administrador.</span>
-      </div>
-
-      <!-- LOGIN FORM -->
+      <!-- 1. FORMULARIO: INICIAR SESIÓN -->
       <form id="loginForm" autocomplete="on">
         <div class="form-group">
           <label class="form-label" for="loginEmail">Correo Electrónico de tu Negocio</label>
@@ -99,15 +133,63 @@
           <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" required>
         </div>
 
-        <button type="submit" id="btnLoginSubmit" class="btn-primary" style="margin-top: 0.5rem;">
+        <button type="submit" id="btnLoginSubmit" class="btn-primary" style="margin-top: 0.5rem; background: linear-gradient(135deg, #4f46e5, #ec4899);">
           Iniciar Sesión en el Panel
         </button>
       </form>
 
-      <!-- DEMO ACCOUNTS QUICK-FILL -->
-      <div class="demo-accounts-box">
+      <!-- 2. FORMULARIO: CREAR CUENTA DIRECTA -->
+      <form id="registerForm" autocomplete="on" style="display: none;">
+        <div class="form-group">
+          <label class="form-label" for="regBusinessName">Nombre del Negocio / Comercio *</label>
+          <input type="text" id="regBusinessName" class="form-input" placeholder="Ej. Peluquería Bella, Café Roma..." required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="regApplicantName">Tu Nombre Completo *</label>
+          <input type="text" id="regApplicantName" class="form-input" placeholder="Ej. Andrea Torres" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="regEmail">Correo Electrónico *</label>
+          <input type="email" id="regEmail" class="form-input" placeholder="contacto@minegocio.com" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="regPassword">Crea tu Contraseña *</label>
+          <input type="password" id="regPassword" class="form-input" placeholder="Mínimo 4 caracteres" minlength="4" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div class="form-group">
+            <label class="form-label" for="regPhone">Teléfono / WhatsApp</label>
+            <input type="text" id="regPhone" class="form-input" placeholder="+34 600 123 456">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="regCategory">Categoría</label>
+            <select id="regCategory" class="form-input">
+              <option value="Restaurante / Cafetería">Restaurante / Bar</option>
+              <option value="Belleza & Estética">Belleza & Estética</option>
+              <option value="Salud / Clínica">Salud / Clínica</option>
+              <option value="Automoción / Taller">Taller Mecánico</option>
+              <option value="Hostelería / Hotel">Hotel / Turismo</option>
+              <option value="Comercio Local / Tienda">Comercio / Tienda</option>
+              <option value="Servicios Profesionales">Servicios</option>
+              <option value="General">Otro sector</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" id="btnRegisterSubmit" class="btn-primary" style="margin-top: 0.5rem; background: linear-gradient(135deg, #10b981, #059669);">
+          ✨ Crear Cuenta y Entrar al Panel
+        </button>
+      </form>
+
+      <!-- DEMO ACCOUNTS QUICK-FILL (Only shown in Login Tab) -->
+      <div id="demoAccountsContainer" class="demo-accounts-box">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-          <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Cuentas Demo Autorizadas</span>
+          <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Cuentas Demo de Prueba</span>
           <span style="font-size: 0.72rem; color: #818cf8;">1-Click</span>
         </div>
 
@@ -128,14 +210,13 @@
         </div>
       </div>
 
-      <!-- Links & Support -->
+      <!-- Links & Superadmin Access -->
       <div style="margin-top: 1.5rem; text-align: center; display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.82rem; color: var(--text-secondary);">
         <div>
-          ¿Aún no tienes cuenta aprobada?
-          <a href="/#como-funciona" style="color: #818cf8; font-weight: 600; text-decoration: underline;">Solicitar Acceso</a>
+          <a href="/" style="color: #818cf8; text-decoration: underline;">← Volver a la página principal</a>
         </div>
         <div style="border-top: 1px solid var(--border-color); padding-top: 0.75rem; margin-top: 0.25rem;">
-          <a href="/admin" style="color: #f59e0b; font-weight: 600;">⚙️ ¿Eres el Superadministrador? Acceso Maestro →</a>
+          <a href="/admin" style="color: #f59e0b; font-weight: 600;">⚙️ ¿Eres Superadministrador? Acceso Maestro →</a>
         </div>
       </div>
 
